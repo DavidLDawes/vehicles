@@ -305,7 +305,11 @@ const App: React.FC = () => {
         );
       case 'fittings':
         return (
-          <FittingsPanel fittings={smallCraftDesign!.fittings} onUpdate={handleUpdateFittings} />
+          <FittingsPanel
+            fittings={smallCraftDesign!.fittings}
+            hullTonnage={smallCraftDesign!.hull.tonnage}
+            onUpdate={handleUpdateFittings}
+          />
         );
       case 'weapons':
         return <WeaponsPanel weapons={smallCraftDesign!.weapons} onUpdate={handleUpdateWeapons} />;

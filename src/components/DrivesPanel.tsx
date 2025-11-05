@@ -149,8 +149,9 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
       // For reaction drives, use the hours that were calculated
       duration = maneuverHours;
     } else if (hasGraviticDrive) {
-      // For gravitic drives, duration is 2 weeks (in hours: 2 weeks * 7 days * 24 hours)
-      duration = 2 * 7 * 24; // 336 hours
+      // For gravitic drives, duration matches power plant operation (weeks converted to hours)
+      // Gravitic drives work as long as they have power
+      duration = powerPlantWeeks * 7 * 24; // weeks * 7 days * 24 hours
     } else {
       // No maneuver drives, just use current duration
       duration = fuel.duration;
@@ -410,11 +411,13 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
               <input
                 type="number"
                 id="maneuverWeeks"
-                value={2}
+                value={powerPlantWeeks}
                 disabled
                 style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
               />
-              <p className="info-text">Gravitic drives do not consume fuel</p>
+              <p className="info-text">
+                Gravitic drives work as long as they have power (matches Power Plant: {powerPlantWeeks} weeks)
+              </p>
             </div>
           )}
 
@@ -493,12 +496,13 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
             <input
               type="number"
               id="fuelDurationWeeks"
-              value={2}
+              value={powerPlantWeeks}
               disabled
               style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
             />
             <p className="info-text">
-              Duration is fixed at 2 weeks for gravitic drives (no fuel consumed)
+              Gravitic drives work as long as they have power. Duration matches Power Plant
+              operation ({powerPlantWeeks} weeks).
             </p>
           </div>
         )}

@@ -414,7 +414,6 @@ export type FittingType = typeof FITTING_TYPES[number];
 export interface CockpitSpec {
   name: string;
   tonsPerCrew: number;
-  costPerCrew: number; // in credits
   allowsPassengers: boolean;
   passengerRatio?: number; // passengers = floor(crew * ratio)
 }
@@ -423,13 +422,11 @@ export const COCKPIT_SPECS: Record<'cockpit' | 'control_cabin', CockpitSpec> = {
   cockpit: {
     name: 'Cockpit',
     tonsPerCrew: 1.5,
-    costPerCrew: 100000, // 0.1 MCr per crew position
     allowsPassengers: false,
   },
   control_cabin: {
     name: 'Control Cabin',
     tonsPerCrew: 3,
-    costPerCrew: 200000, // 0.2 MCr per crew position
     allowsPassengers: true,
     passengerRatio: 0.5, // floor(crew * 0.5) passengers
   },
@@ -441,14 +438,54 @@ export function calculateCockpitMass(type: 'cockpit' | 'control_cabin', crew: nu
 }
 
 // Calculate cost for cockpit/control cabin
-export function calculateCockpitCost(type: 'cockpit' | 'control_cabin', crew: number): number {
-  return COCKPIT_SPECS[type].costPerCrew * crew;
+// Cost is 0.1 MCr per 20 tons of ship, rounded up
+export function calculateCockpitCost(hullTonnage: number): number {
+  const units = Math.ceil(hullTonnage / 20);
+  return units * 100000; // 0.1 MCr = 100,000 credits
 }
 
 // Calculate passengers for control cabin
 export function calculatePassengers(crew: number): number {
   return Math.floor(crew * 0.5);
 }
+
+// Cabin specifications
+export const CABIN_TONS_PER_PASSENGER = 1.5;
+export const CABIN_COST_PER_TON = 50000; // 0.05 MCr per ton
+
+// Calculate mass for cabins
+export function calculateCabinMass(passengers: number): number {
+  return passengers * CABIN_TONS_PER_PASSENGER;
+}
+
+// Calculate cost for cabins (0.05 MCr per ton)
+export function calculateCabinCost(passengers: number): number {
+  const tons = calculateCabinMass(passengers);
+  return tons * CABIN_COST_PER_TON;
+}
+
+// Airlock specifications
+export const AIRLOCK_MASS = 1; // 1 ton each
+export const AIRLOCK_COST = 200000; // 0.2 MCr each
+export const AIRLOCK_MAX_QUANTITY = 6; // Maximum 6 airlocks
+
+// Calculate mass for airlocks
+export function calculateAirlockMass(quantity: number): number {
+  return quantity * AIRLOCK_MASS;
+}
+
+// Calculate cost for airlocks
+export function calculateAirlockCost(quantity: number): number {
+  return quantity * AIRLOCK_COST;
+}
+
+// Fresher specifications
+export const FRESHER_MASS = 1; // 1 ton
+export const FRESHER_COST = 100000; // 0.1 MCr
+
+// Galley specifications
+export const GALLEY_MASS = 0.5; // 0.5 tons
+export const GALLEY_COST = 100000; // 0.1 MCr
 
 // Mass calculation constants
 export const FUEL_MASS_PER_TON = 1.0;
