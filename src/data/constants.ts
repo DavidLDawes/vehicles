@@ -225,6 +225,33 @@ export function getAvailableDriveModels(tonnage: number): DriveModel[] {
   return DRIVE_MODELS.filter((model) => getDrivePerformance(model, tonnage) !== null);
 }
 
+// Check if a reaction drive would consume too much fuel (>90% hull tonnage per hour)
+export function isReactionDriveValid(model: DriveModel, tonnage: number): boolean {
+  const performance = getDrivePerformance(model, tonnage);
+  if (performance === null) return false;
+
+  // Calculate fuel consumption for 1 hour
+  const fuelPerHour = calculateManeuverDriveFuel('reaction_m', performance, tonnage, 1);
+
+  // Check if it's less than 90% of hull tonnage
+  return fuelPerHour < (tonnage * 0.9);
+}
+
+// Get available drive models filtered by drive type and fuel constraints
+export function getAvailableDriveModelsForType(
+  tonnage: number,
+  driveType: DriveType
+): DriveModel[] {
+  const baseDrives = getAvailableDriveModels(tonnage);
+
+  // For reaction drives, filter out those that would consume >90% fuel per hour
+  if (driveType === 'reaction_m') {
+    return baseDrives.filter((model) => isReactionDriveValid(model, tonnage));
+  }
+
+  return baseDrives;
+}
+
 // Format performance rating with prefix (M- for maneuver, P- for power plant)
 export function formatPerformanceRating(
   performance: number | null,
@@ -233,6 +260,131 @@ export function formatPerformanceRating(
   if (performance === null) return 'N/A';
   const prefix = driveCategory === 'maneuver' ? 'M' : 'P';
   return `${prefix}-${performance}`;
+}
+
+// Fuel requirements for fusion power plants (tons for 2 weeks operation)
+export const FUSION_FUEL_REQUIREMENTS: Record<DriveModel, number> = {
+  sA: 1,
+  sB: 1,
+  sC: 1,
+  sD: 1,
+  sE: 1.5,
+  sF: 1.5,
+  sG: 1.5,
+  sH: 1.5,
+  sJ: 2,
+  sK: 2,
+  sL: 2,
+  sM: 2,
+  sN: 2.5,
+  sP: 2.5,
+  sQ: 2.5,
+  sR: 2.5,
+  sS: 3,
+  sT: 3,
+  sU: 3,
+  sV: 3,
+  sW: 3.5,
+  sX: 3.5,
+  sY: 3.5,
+  sZ: 3.5,
+};
+
+// Fuel requirements for chemical power plants (tons for 2 weeks operation)
+export const CHEMICAL_FUEL_REQUIREMENTS: Record<DriveModel, number> = {
+  sA: 5,
+  sB: 10,
+  sC: 15,
+  sD: 20,
+  sE: 25,
+  sF: 30,
+  sG: 35,
+  sH: 40,
+  sJ: 45,
+  sK: 50,
+  sL: 55,
+  sM: 60,
+  sN: 65,
+  sP: 70,
+  sQ: 75,
+  sR: 80,
+  sS: 85,
+  sT: 90,
+  sU: 95,
+  sV: 100,
+  sW: 105,
+  sX: 110,
+  sY: 115,
+  sZ: 120,
+};
+
+// Calculate fuel requirement for a power plant
+export function calculatePowerPlantFuel(
+  driveType: DriveType,
+  model: DriveModel,
+  weeks: number
+): number {
+  if (driveType === 'fusion_p') {
+    return FUSION_FUEL_REQUIREMENTS[model] * (weeks / 2);
+  } else if (driveType === 'chemical_p') {
+    return CHEMICAL_FUEL_REQUIREMENTS[model] * (weeks / 2);
+  }
+  return 0;
+}
+
+// Calculate fuel requirement for a maneuver drive (reaction only, gravitic uses no fuel)
+export function calculateManeuverDriveFuel(
+  driveType: DriveType,
+  performance: number,
+  hullTonnage: number,
+  hours: number
+): number {
+  if (driveType === 'reaction_m') {
+    // 2.5% of hull tonnage per point of maneuver per hour
+    return (hullTonnage * 0.025 * performance * hours);
+  }
+  // Gravitic drives use no fuel
+  return 0;
+}
+
+// Calculate total fuel requirement for all drives
+export function calculateTotalFuelRequirement(
+  drives: Array<{
+    type: 'powerPlant' | 'maneuver' | 'jump';
+    driveType?: string;
+    model: string;
+    performance?: number;
+  }>,
+  hullTonnage: number,
+  powerPlantWeeks: number,
+  maneuverHours: number
+): { total: number; breakdown: { powerPlant: number; maneuver: number } } {
+  let powerPlantFuel = 0;
+  let maneuverFuel = 0;
+
+  drives.forEach((drive) => {
+    if (drive.type === 'powerPlant' && drive.driveType) {
+      const fuel = calculatePowerPlantFuel(
+        drive.driveType as DriveType,
+        drive.model as DriveModel,
+        powerPlantWeeks
+      );
+      powerPlantFuel += fuel;
+    } else if (drive.type === 'maneuver' && drive.driveType && drive.performance) {
+      const fuel = calculateManeuverDriveFuel(
+        drive.driveType as DriveType,
+        drive.performance,
+        hullTonnage,
+        maneuverHours
+      );
+      maneuverFuel += fuel;
+    }
+  });
+
+  return {
+    total: powerPlantFuel + maneuverFuel,
+    breakdown: { powerPlant: powerPlantFuel, maneuver: maneuverFuel },
+  };
 }
 
 // Weapon types (simplified - to be expanded)
@@ -257,6 +409,46 @@ export const FITTING_TYPES = [
 ] as const;
 
 export type FittingType = typeof FITTING_TYPES[number];
+
+// Cockpit and Control Cabin specifications
+export interface CockpitSpec {
+  name: string;
+  tonsPerCrew: number;
+  costPerCrew: number; // in credits
+  allowsPassengers: boolean;
+  passengerRatio?: number; // passengers = floor(crew * ratio)
+}
+
+export const COCKPIT_SPECS: Record<'cockpit' | 'control_cabin', CockpitSpec> = {
+  cockpit: {
+    name: 'Cockpit',
+    tonsPerCrew: 1.5,
+    costPerCrew: 100000, // 0.1 MCr per crew position
+    allowsPassengers: false,
+  },
+  control_cabin: {
+    name: 'Control Cabin',
+    tonsPerCrew: 3,
+    costPerCrew: 200000, // 0.2 MCr per crew position
+    allowsPassengers: true,
+    passengerRatio: 0.5, // floor(crew * 0.5) passengers
+  },
+};
+
+// Calculate mass for cockpit/control cabin
+export function calculateCockpitMass(type: 'cockpit' | 'control_cabin', crew: number): number {
+  return COCKPIT_SPECS[type].tonsPerCrew * crew;
+}
+
+// Calculate cost for cockpit/control cabin
+export function calculateCockpitCost(type: 'cockpit' | 'control_cabin', crew: number): number {
+  return COCKPIT_SPECS[type].costPerCrew * crew;
+}
+
+// Calculate passengers for control cabin
+export function calculatePassengers(crew: number): number {
+  return Math.floor(crew * 0.5);
+}
 
 // Mass calculation constants
 export const FUEL_MASS_PER_TON = 1.0;

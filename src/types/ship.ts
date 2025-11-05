@@ -40,6 +40,8 @@ export interface Fitting {
   mass: number;
   cost: number;
   quantity: number;
+  crew?: number; // For cockpit/control cabin - number of crew positions
+  passengers?: number; // For control cabin - calculated as floor(crew / 2)
   description?: string;
 }
 
