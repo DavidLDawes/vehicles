@@ -298,6 +298,7 @@ const App: React.FC = () => {
           <DrivesPanel
             drives={smallCraftDesign!.drives}
             fuel={smallCraftDesign!.fuel}
+            hullTonnage={smallCraftDesign!.hull.tonnage}
             onUpdateDrives={handleUpdateDrives}
             onUpdateFuel={handleUpdateFuel}
           />

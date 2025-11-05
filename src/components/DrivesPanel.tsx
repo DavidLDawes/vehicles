@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Drive, Fuel } from '../types/ship';
 import {
-  DRIVE_MODELS,
   DriveModel,
   DriveType,
   getDriveSpec,
   getDriveTypeName,
   mcrToCredits,
+  getAvailableDriveModels,
+  getDrivePerformance,
+  formatPerformanceRating,
 } from '../data/constants';
 
 interface DrivesPanelProps {
   drives: Drive[];
   fuel: Fuel;
+  hullTonnage: number;
   onUpdateDrives: (drives: Drive[]) => void;
   onUpdateFuel: (fuel: Fuel) => void;
 }
@@ -19,12 +22,25 @@ interface DrivesPanelProps {
 export const DrivesPanel: React.FC<DrivesPanelProps> = ({
   drives,
   fuel,
+  hullTonnage,
   onUpdateDrives,
   onUpdateFuel,
 }) => {
   const [selectedDriveType, setSelectedDriveType] = useState<DriveType>('gravitic_m');
   const [selectedModel, setSelectedModel] = useState<DriveModel>('sA');
   const [driveCategory, setDriveCategory] = useState<'maneuver' | 'powerPlant'>('maneuver');
+
+  // Get available drive models based on hull tonnage
+  const availableDriveModels = getAvailableDriveModels(hullTonnage);
+
+  // Update selected model if it becomes unavailable
+  useEffect(() => {
+    if (!availableDriveModels.includes(selectedModel)) {
+      if (availableDriveModels.length > 0) {
+        setSelectedModel(availableDriveModels[0]);
+      }
+    }
+  }, [hullTonnage, selectedModel, availableDriveModels]);
 
   const handleAddDrive = () => {
     const spec = getDriveSpec(selectedDriveType, selectedModel);
@@ -122,22 +138,35 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
             value={selectedModel}
             onChange={(e) => setSelectedModel(e.target.value as DriveModel)}
           >
-            {DRIVE_MODELS.map((model) => (
+            {availableDriveModels.map((model) => (
               <option key={model} value={model}>
                 {model}
               </option>
             ))}
           </select>
+          {availableDriveModels.length === 0 && (
+            <p className="warning">No drives available for this hull tonnage</p>
+          )}
         </div>
 
-        <div className="drive-specs">
-          <p>
-            <strong>Tonnage:</strong> {getDriveSpec(selectedDriveType, selectedModel).tonnage} tons
-          </p>
-          <p>
-            <strong>Cost:</strong> {getDriveSpec(selectedDriveType, selectedModel).cost} MCr
-          </p>
-        </div>
+        {availableDriveModels.length > 0 && (
+          <div className="drive-specs">
+            <p>
+              <strong>Tonnage:</strong> {getDriveSpec(selectedDriveType, selectedModel).tonnage}{' '}
+              tons
+            </p>
+            <p>
+              <strong>Cost:</strong> {getDriveSpec(selectedDriveType, selectedModel).cost} MCr
+            </p>
+            <p>
+              <strong>Performance:</strong>{' '}
+              {formatPerformanceRating(
+                getDrivePerformance(selectedModel, hullTonnage),
+                driveCategory
+              )}
+            </p>
+          </div>
+        )}
 
         <button onClick={handleAddDrive}>Add Drive</button>
 
@@ -175,7 +204,7 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
                       value={drive.model}
                       onChange={(e) => handleUpdateDrive(drive.id, { model: e.target.value })}
                     >
-                      {DRIVE_MODELS.map((model) => (
+                      {availableDriveModels.map((model) => (
                         <option key={model} value={model}>
                           {model}
                         </option>
@@ -187,6 +216,13 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
                   </p>
                   <p>
                     <strong>Cost:</strong> {(drive.cost / 1000000).toFixed(2)} MCr
+                  </p>
+                  <p>
+                    <strong>Performance:</strong>{' '}
+                    {formatPerformanceRating(
+                      getDrivePerformance(drive.model as DriveModel, hullTonnage),
+                      drive.type as 'maneuver' | 'powerPlant'
+                    )}
                   </p>
                 </div>
                 <button onClick={() => handleRemoveDrive(drive.id)}>Remove</button>

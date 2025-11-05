@@ -182,6 +182,59 @@ export function getDriveTypeName(driveType: DriveType): string {
   return names[driveType];
 }
 
+// Drive performance table - performance rating by hull tonnage
+// null means drive is not available for that tonnage
+export const DRIVE_PERFORMANCE: Record<DriveModel, Record<number, number | null>> = {
+  sA: { 10: 2, 20: 1, 30: null, 40: null, 50: null, 60: null, 70: null, 80: null, 90: null, 100: null },
+  sB: { 10: 4, 20: 2, 30: 1, 40: 1, 50: null, 60: null, 70: null, 80: null, 90: null, 100: null },
+  sC: { 10: 6, 20: 3, 30: 2, 40: 1, 50: 1, 60: 1, 70: null, 80: null, 90: null, 100: null },
+  sD: { 10: 8, 20: 4, 30: 2, 40: 2, 50: 1, 60: 1, 70: 1, 80: 1, 90: null, 100: null },
+  sE: { 10: 10, 20: 5, 30: 3, 40: 2, 50: 2, 60: 1, 70: 1, 80: 1, 90: 1, 100: 1 },
+  sF: { 10: 12, 20: 6, 30: 4, 40: 3, 50: 2, 60: 2, 70: 1, 80: 1, 90: 1, 100: 1 },
+  sG: { 10: null, 20: 7, 30: 4, 40: 3, 50: 2, 60: 2, 70: 2, 80: 2, 90: 1, 100: 1 },
+  sH: { 10: null, 20: 8, 30: 5, 40: 4, 50: 3, 60: 2, 70: 2, 80: 2, 90: 2, 100: 2 },
+  sJ: { 10: null, 20: 9, 30: 6, 40: 4, 50: 3, 60: 3, 70: 2, 80: 2, 90: 2, 100: 2 },
+  sK: { 10: null, 20: 10, 30: 6, 40: 5, 50: 4, 60: 3, 70: 3, 80: 3, 90: 2, 100: 2 },
+  sL: { 10: null, 20: 11, 30: 7, 40: 5, 50: 4, 60: 3, 70: 3, 80: 3, 90: 3, 100: 3 },
+  sM: { 10: null, 20: 12, 30: 8, 40: 6, 50: 4, 60: 4, 70: 3, 80: 3, 90: 3, 100: 3 },
+  sN: { 10: null, 20: 13, 30: 8, 40: 6, 50: 5, 60: 4, 70: 4, 80: 4, 90: 3, 100: 3 },
+  sP: { 10: null, 20: 14, 30: 9, 40: 7, 50: 5, 60: 4, 70: 4, 80: 4, 90: 4, 100: 4 },
+  sQ: { 10: null, 20: null, 30: 10, 40: 7, 50: 6, 60: 5, 70: 4, 80: 4, 90: 4, 100: 4 },
+  sR: { 10: null, 20: null, 30: 10, 40: 8, 50: 6, 60: 5, 70: 5, 80: 5, 90: 4, 100: 4 },
+  sS: { 10: null, 20: null, 30: 11, 40: 8, 50: 6, 60: 5, 70: 5, 80: 5, 90: 5, 100: 5 },
+  sT: { 10: null, 20: null, 30: 12, 40: 9, 50: 7, 60: 6, 70: 5, 80: 5, 90: 5, 100: 5 },
+  sU: { 10: null, 20: null, 30: 12, 40: 9, 50: 7, 60: 6, 70: 6, 80: 5, 90: 5, 100: 5 },
+  sV: { 10: null, 20: null, 30: 13, 40: 10, 50: 8, 60: 6, 70: 6, 80: 6, 90: 5, 100: 5 },
+  sW: { 10: null, 20: null, 30: 14, 40: 10, 50: 8, 60: 7, 70: 6, 80: 6, 90: 6, 100: 5 },
+  sX: { 10: null, 20: null, 30: 14, 40: 11, 50: 8, 60: 7, 70: 6, 80: 6, 90: 6, 100: 6 },
+  sY: { 10: null, 20: null, 30: 15, 40: 11, 50: 9, 60: 7, 70: 6, 80: 6, 90: 6, 100: 6 },
+  sZ: { 10: null, 20: null, 30: 16, 40: 12, 50: 9, 60: 8, 70: 6, 80: 6, 90: 6, 100: 6 },
+};
+
+// Get drive performance for a given model and hull tonnage
+export function getDrivePerformance(model: DriveModel, tonnage: number): number | null {
+  // Round tonnage to nearest 10 for lookup
+  const roundedTonnage = Math.ceil(tonnage / 10) * 10;
+  if (roundedTonnage < 10 || roundedTonnage > 100) return null;
+
+  return DRIVE_PERFORMANCE[model][roundedTonnage];
+}
+
+// Get available drive models for a given hull tonnage
+export function getAvailableDriveModels(tonnage: number): DriveModel[] {
+  return DRIVE_MODELS.filter((model) => getDrivePerformance(model, tonnage) !== null);
+}
+
+// Format performance rating with prefix (M- for maneuver, P- for power plant)
+export function formatPerformanceRating(
+  performance: number | null,
+  driveCategory: 'maneuver' | 'powerPlant'
+): string {
+  if (performance === null) return 'N/A';
+  const prefix = driveCategory === 'maneuver' ? 'M' : 'P';
+  return `${prefix}-${performance}`;
+}
+
 // Weapon types (simplified - to be expanded)
 export const WEAPON_TYPES = [
   'pulse_laser',
