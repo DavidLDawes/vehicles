@@ -398,6 +398,101 @@ export const WEAPON_TYPES = [
 
 export type WeaponType = typeof WEAPON_TYPES[number];
 
+// Ship weapon specifications
+export interface ShipWeaponSpec {
+  name: string;
+  mass: number; // tons
+  cost: number; // credits
+  slotsUsed: number; // number of ship weapon slots consumed
+  minTonnage?: number; // minimum hull tonnage required
+}
+
+export const SHIP_WEAPONS: Record<string, ShipWeaponSpec> = {
+  pulse_laser_single: {
+    name: 'Single Pulse Laser Turret',
+    mass: 1,
+    cost: 1700000, // 1.7 MCr
+    slotsUsed: 1,
+  },
+  pulse_laser_double: {
+    name: 'Double Pulse Laser Turret',
+    mass: 1,
+    cost: 2500000, // 2.5 MCr
+    slotsUsed: 1,
+  },
+  pulse_laser_triple: {
+    name: 'Triple Pulse Laser Turret',
+    mass: 1,
+    cost: 3500000, // 3.5 MCr
+    slotsUsed: 1,
+  },
+  beam_laser_single: {
+    name: 'Single Beam Laser Turret',
+    mass: 1,
+    cost: 2200000, // 2.2 MCr
+    slotsUsed: 1,
+  },
+  beam_laser_double: {
+    name: 'Double Beam Laser Turret',
+    mass: 1,
+    cost: 3500000, // 3.5 MCr
+    slotsUsed: 1,
+  },
+  beam_laser_triple: {
+    name: 'Triple Beam Laser Turret',
+    mass: 1,
+    cost: 5000000, // 5 MCr
+    slotsUsed: 1,
+  },
+  particle_beam_barbette: {
+    name: 'Particle Beam Barbette',
+    mass: 10,
+    cost: 5500000, // 5.5 MCr
+    slotsUsed: 2,
+    minTonnage: 40, // Requires 40+ ton hull
+  },
+};
+
+// Get available ship weapons for a given hull tonnage
+export function getAvailableShipWeapons(tonnage: number): Record<string, ShipWeaponSpec> {
+  const available: Record<string, ShipWeaponSpec> = {};
+
+  for (const [key, spec] of Object.entries(SHIP_WEAPONS)) {
+    if (!spec.minTonnage || tonnage >= spec.minTonnage) {
+      available[key] = spec;
+    }
+  }
+
+  return available;
+}
+
+// Weapon limits by small craft tonnage
+export interface WeaponLimits {
+  shipWeapons: number;
+  antiPersonnelWeapons: number;
+}
+
+export const WEAPON_LIMITS: Record<number, WeaponLimits> = {
+  10: { shipWeapons: 1, antiPersonnelWeapons: 1 },
+  20: { shipWeapons: 1, antiPersonnelWeapons: 2 },
+  30: { shipWeapons: 1, antiPersonnelWeapons: 3 },
+  40: { shipWeapons: 2, antiPersonnelWeapons: 4 },
+  50: { shipWeapons: 2, antiPersonnelWeapons: 5 },
+  60: { shipWeapons: 2, antiPersonnelWeapons: 6 },
+  70: { shipWeapons: 3, antiPersonnelWeapons: 7 },
+  80: { shipWeapons: 3, antiPersonnelWeapons: 8 },
+  90: { shipWeapons: 4, antiPersonnelWeapons: 9 },
+  100: { shipWeapons: 5, antiPersonnelWeapons: 10 },
+};
+
+// Get weapon limits for a given hull tonnage
+export function getWeaponLimits(tonnage: number): WeaponLimits {
+  // Round up to nearest 10
+  const roundedTonnage = Math.ceil(tonnage / 10) * 10;
+  const clampedTonnage = Math.max(10, Math.min(100, roundedTonnage));
+  return WEAPON_LIMITS[clampedTonnage];
+}
+
 // Fitting types (simplified - to be expanded)
 export const FITTING_TYPES = [
   'cockpit',

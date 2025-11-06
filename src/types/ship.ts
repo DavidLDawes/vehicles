@@ -49,9 +49,11 @@ export interface Weapon {
   id: string;
   type: string;
   name: string;
+  category?: 'ship' | 'anti-personnel'; // ship weapons or anti-personnel weapons
   mass: number;
   cost: number;
   quantity: number;
+  slotsUsed?: number; // number of ship weapon slots consumed (default 1)
   mountType?: string;
   ammunition?: number;
 }
