@@ -94,10 +94,22 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
           <h4>Staff</h4>
           <ul>
             <li>Pilots: {design.staff.pilot}</li>
-            <li>Navigators: {design.staff.navigator}</li>
-            <li>Engineers: {design.staff.engineer}</li>
-            <li>Gunners: {design.staff.gunner}</li>
-            <li>Other: {design.staff.other}</li>
+            {design.staff.gunner > 0 && <li>Gunners: {design.staff.gunner}</li>}
+            {design.staff.comms && <li>Communications: 1</li>}
+            {design.staff.sensors && <li>Sensors: 1</li>}
+            {design.staff.ecm && <li>ECM: 1</li>}
+            {design.staff.other > 0 && <li>Other: {design.staff.other}</li>}
+            <li>
+              <strong>
+                Total Crew:{' '}
+                {design.staff.pilot +
+                  design.staff.gunner +
+                  (design.staff.comms ? 1 : 0) +
+                  (design.staff.sensors ? 1 : 0) +
+                  (design.staff.ecm ? 1 : 0) +
+                  design.staff.other}
+              </strong>
+            </li>
           </ul>
         </div>
 

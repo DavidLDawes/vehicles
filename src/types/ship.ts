@@ -59,15 +59,17 @@ export interface Weapon {
 }
 
 export interface Cargo {
-  amount: number; // tons
+  cargoBay: number; // tons, no cost
+  shipsLocker: number; // tons, 0.2 MCr per ton
   description?: string;
 }
 
 export interface Staff {
   pilot: number;
-  navigator: number;
-  engineer: number;
   gunner: number;
+  comms: boolean; // Adds 1 crew if true
+  sensors: boolean; // Adds 1 crew if true
+  ecm: boolean; // Adds 1 crew if true
   other: number;
 }
 
@@ -94,5 +96,6 @@ export type PanelType =
   | 'drives'
   | 'fittings'
   | 'weapons'
+  | 'cargo'
   | 'staff'
   | 'summary';

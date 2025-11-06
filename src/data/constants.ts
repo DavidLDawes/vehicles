@@ -466,6 +466,40 @@ export function getAvailableShipWeapons(tonnage: number): Record<string, ShipWea
   return available;
 }
 
+// Calculate required gunners based on weapons
+// - 1 gunner per Particle Beam Barbette
+// - 1 gunner per turret TYPE (pulse_laser, beam_laser, etc.)
+export function calculateRequiredGunners(
+  weapons: Array<{ type: string; category?: string }>
+): number {
+  let gunners = 0;
+
+  const shipWeapons = weapons.filter((w) => w.category === 'ship');
+
+  if (shipWeapons.length === 0) return 0;
+
+  // Count particle beam barbettes (1 gunner each)
+  const barbetteCount = shipWeapons.filter((w) => w.type === 'particle_beam_barbette').length;
+  gunners += barbetteCount;
+
+  // Track unique turret types
+  const turretTypes = new Set<string>();
+
+  shipWeapons.forEach((weapon) => {
+    // Extract base turret type (pulse_laser, beam_laser)
+    if (weapon.type.startsWith('pulse_laser_')) {
+      turretTypes.add('pulse_laser');
+    } else if (weapon.type.startsWith('beam_laser_')) {
+      turretTypes.add('beam_laser');
+    }
+  });
+
+  // Add 1 gunner per unique turret type
+  gunners += turretTypes.size;
+
+  return gunners;
+}
+
 // Weapon limits by small craft tonnage
 export interface WeaponLimits {
   shipWeapons: number;
@@ -581,6 +615,15 @@ export const FRESHER_COST = 100000; // 0.1 MCr
 // Galley specifications
 export const GALLEY_MASS = 0.5; // 0.5 tons
 export const GALLEY_COST = 100000; // 0.1 MCr
+
+// Cargo specifications
+export const SHIPS_LOCKER_COST_PER_TON = 200000; // 0.2 MCr per ton
+export const CARGO_BAY_COST_PER_TON = 0; // Free
+
+// Calculate cost for ship's locker
+export function calculateShipsLockerCost(tons: number): number {
+  return tons * SHIPS_LOCKER_COST_PER_TON;
+}
 
 // Mass calculation constants
 export const FUEL_MASS_PER_TON = 1.0;

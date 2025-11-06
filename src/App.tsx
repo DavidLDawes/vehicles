@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { SmallCraftDesign, PanelType, Hull, Drive, Fuel, Fitting, Weapon, Armor, Staff } from './types/ship';
+import { SmallCraftDesign, PanelType, Hull, Drive, Fuel, Fitting, Weapon, Armor, Staff, Cargo } from './types/ship';
 import { SelectSmallCraftPanel } from './components/SelectSmallCraftPanel';
 import { HullPanel } from './components/HullPanel';
 import { ArmorPanel } from './components/ArmorPanel';
 import { DrivesPanel } from './components/DrivesPanel';
 import { FittingsPanel } from './components/FittingsPanel';
 import { WeaponsPanel } from './components/WeaponsPanel';
+import { CargoPanel } from './components/CargoPanel';
 import { StaffPanel } from './components/StaffPanel';
 import { SummaryPanel } from './components/SummaryPanel';
 import './App.css';
@@ -37,13 +38,15 @@ const App: React.FC = () => {
     fittings: [],
     weapons: [],
     cargo: {
-      amount: 0,
+      cargoBay: 0,
+      shipsLocker: 0,
     },
     staff: {
       pilot: 1,
-      navigator: 0,
-      engineer: 0,
       gunner: 0,
+      comms: false,
+      sensors: false,
+      ecm: false,
       other: 0,
     },
   });
@@ -72,8 +75,8 @@ const App: React.FC = () => {
       0
     );
 
-    // Cargo mass
-    totalMass += smallCraftDesign.cargo.amount;
+    // Cargo mass (cargo bay + ship's locker)
+    totalMass += smallCraftDesign.cargo.cargoBay + smallCraftDesign.cargo.shipsLocker;
 
     // Armor mass (directly from armor.mass)
     if (smallCraftDesign.armor) {
@@ -92,6 +95,7 @@ const App: React.FC = () => {
         fittings: 0,
         weapons: 0,
         armor: 0,
+        cargo: 0,
         total: 0,
       };
     }
@@ -110,6 +114,7 @@ const App: React.FC = () => {
       0
     );
     const armorCost = smallCraftDesign.armor ? smallCraftDesign.armor.cost : 0;
+    const cargoCost = smallCraftDesign.cargo.shipsLocker * 200000; // Ship's locker: 0.2 MCr per ton
 
     return {
       hull: hullCost,
@@ -117,7 +122,8 @@ const App: React.FC = () => {
       fittings: fittingsCost,
       weapons: weaponsCost,
       armor: armorCost,
-      total: hullCost + drivesCost + fittingsCost + weaponsCost + armorCost,
+      cargo: cargoCost,
+      total: hullCost + drivesCost + fittingsCost + weaponsCost + armorCost + cargoCost,
     };
   };
 
@@ -147,6 +153,8 @@ const App: React.FC = () => {
         return smallCraftDesign.fittings.length > 0; // At least one fitting required
       case 'weapons':
         return true; // Weapons are optional
+      case 'cargo':
+        return true; // Cargo is optional
       case 'staff':
         return smallCraftDesign.staff.pilot > 0; // At least one pilot required
       case 'summary':
@@ -175,6 +183,7 @@ const App: React.FC = () => {
     'drives',
     'fittings',
     'weapons',
+    'cargo',
     'staff',
     'summary',
   ];
@@ -234,6 +243,12 @@ const App: React.FC = () => {
   const handleUpdateWeapons = (weapons: Weapon[]) => {
     if (smallCraftDesign) {
       setSmallCraftDesign({ ...smallCraftDesign, weapons });
+    }
+  };
+
+  const handleUpdateCargo = (cargo: Cargo) => {
+    if (smallCraftDesign) {
+      setSmallCraftDesign({ ...smallCraftDesign, cargo });
     }
   };
 
@@ -319,8 +334,21 @@ const App: React.FC = () => {
             onUpdate={handleUpdateWeapons}
           />
         );
+      case 'cargo':
+        return (
+          <CargoPanel
+            cargo={smallCraftDesign!.cargo}
+            onUpdate={handleUpdateCargo}
+          />
+        );
       case 'staff':
-        return <StaffPanel staff={smallCraftDesign!.staff} onUpdate={handleUpdateStaff} />;
+        return (
+          <StaffPanel
+            staff={smallCraftDesign!.staff}
+            weapons={smallCraftDesign!.weapons}
+            onUpdate={handleUpdateStaff}
+          />
+        );
       case 'summary':
         return (
           <SummaryPanel
@@ -413,6 +441,12 @@ const App: React.FC = () => {
               <div className="stat-item cost-breakdown">
                 <span>Weapons:</span>
                 <strong>{(costBreakdown.weapons / 1000000).toFixed(2)} MCr</strong>
+              </div>
+            )}
+            {costBreakdown.cargo > 0 && (
+              <div className="stat-item cost-breakdown">
+                <span>Cargo:</span>
+                <strong>{(costBreakdown.cargo / 1000000).toFixed(2)} MCr</strong>
               </div>
             )}
             <div className="stat-item cost-total">
