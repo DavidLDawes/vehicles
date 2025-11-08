@@ -1,19 +1,38 @@
 import React, { useState } from 'react';
-import { Weapon } from '../types/ship';
-import { getWeaponLimits, getAvailableShipWeapons, SHIP_WEAPONS } from '../data/constants';
+import { Weapon, Drive } from '../types/ship';
+import {
+  getWeaponLimits,
+  getAvailableShipWeapons,
+  SHIP_WEAPONS,
+  calculateTotalEnergyWeaponCapacity,
+  calculateEnergyWeaponCount,
+} from '../data/constants';
 
 interface WeaponsPanelProps {
   weapons: Weapon[];
   hullTonnage: number;
+  drives: Drive[];
   onUpdate: (weapons: Weapon[]) => void;
 }
 
-export const WeaponsPanel: React.FC<WeaponsPanelProps> = ({ weapons, hullTonnage, onUpdate }) => {
+export const WeaponsPanel: React.FC<WeaponsPanelProps> = ({
+  weapons,
+  hullTonnage,
+  drives,
+  onUpdate,
+}) => {
   const [selectedCategory, setSelectedCategory] = useState<'ship' | 'anti-personnel'>('ship');
   const [selectedShipWeapon, setSelectedShipWeapon] = useState<string>('pulse_laser_single');
 
   const weaponLimits = getWeaponLimits(hullTonnage);
   const availableShipWeapons = getAvailableShipWeapons(hullTonnage);
+
+  // Calculate total energy weapon capacity from all power plants
+  const powerPlants = drives.filter((d) => d.type === 'powerPlant');
+  const energyWeaponCapacity = calculateTotalEnergyWeaponCapacity(drives);
+
+  // Count current energy weapons
+  const currentEnergyWeaponCount = calculateEnergyWeaponCount(weapons);
 
   // Count current weapon slots used (not just weapon count)
   const shipWeaponSlotsUsed = weapons
@@ -21,10 +40,23 @@ export const WeaponsPanel: React.FC<WeaponsPanelProps> = ({ weapons, hullTonnage
     .reduce((sum, w) => sum + (w.slotsUsed || 1), 0);
   const antiPersonnelWeaponCount = weapons.filter(w => w.category === 'anti-personnel').length;
 
-  // Check if we can add more weapons (considering slots used)
+  // Check if we can add more weapons (considering slots used and energy weapon capacity)
   const selectedWeaponSpec = SHIP_WEAPONS[selectedShipWeapon];
-  const canAddShipWeapon = selectedWeaponSpec &&
-    (shipWeaponSlotsUsed + selectedWeaponSpec.slotsUsed) <= weaponLimits.shipWeapons;
+
+  let canAddShipWeapon = false;
+  if (selectedWeaponSpec) {
+    // Check ship weapon slots
+    const hasSlots = (shipWeaponSlotsUsed + selectedWeaponSpec.slotsUsed) <= weaponLimits.shipWeapons;
+
+    // Check energy weapon capacity if this is an energy weapon
+    let hasEnergyCapacity = true;
+    if (selectedWeaponSpec.energyWeapons > 0) {
+      hasEnergyCapacity = (currentEnergyWeaponCount + selectedWeaponSpec.energyWeapons) <= energyWeaponCapacity;
+    }
+
+    canAddShipWeapon = hasSlots && hasEnergyCapacity;
+  }
+
   const canAddAntiPersonnelWeapon = antiPersonnelWeaponCount < weaponLimits.antiPersonnelWeapons;
 
   const handleAddWeapon = () => {
@@ -77,6 +109,17 @@ export const WeaponsPanel: React.FC<WeaponsPanelProps> = ({ weapons, hullTonnage
             )}
           </div>
           <div className="limit-item">
+            <strong>Energy Weapon Capacity:</strong> {currentEnergyWeaponCount} /{' '}
+            {energyWeaponCapacity}
+            {powerPlants.length === 0 && <span className="warning"> (No power plant installed)</span>}
+            {powerPlants.length > 0 && energyWeaponCapacity === 0 && (
+              <span className="warning"> (Power plant(s) too small for energy weapons)</span>
+            )}
+            {currentEnergyWeaponCount >= energyWeaponCapacity && energyWeaponCapacity > 0 && (
+              <span className="warning"> (Maximum reached)</span>
+            )}
+          </div>
+          <div className="limit-item">
             <strong>Anti-Personnel Weapons:</strong> {antiPersonnelWeaponCount} /{' '}
             {weaponLimits.antiPersonnelWeapons}
             {antiPersonnelWeaponCount >= weaponLimits.antiPersonnelWeapons && (
@@ -84,6 +127,21 @@ export const WeaponsPanel: React.FC<WeaponsPanelProps> = ({ weapons, hullTonnage
             )}
           </div>
         </div>
+        {powerPlants.length > 0 && (
+          <p className="info-text">
+            {powerPlants.length === 1 ? (
+              <>
+                Power Plant: {powerPlants[0].model} (supports {energyWeaponCapacity} energy weapon
+                {energyWeaponCapacity !== 1 ? 's' : ''})
+              </>
+            ) : (
+              <>
+                Power Plants: {powerPlants.map(pp => pp.model).join(', ')} (combined capacity: {energyWeaponCapacity} energy weapon
+                {energyWeaponCapacity !== 1 ? 's' : ''})
+              </>
+            )}
+          </p>
+        )}
 
         <h3>Add Weapon</h3>
         <div className="form-group">
@@ -129,6 +187,17 @@ export const WeaponsPanel: React.FC<WeaponsPanelProps> = ({ weapons, hullTonnage
                     <span className="info-text"> (counts as {selectedWeaponSpec.slotsUsed} ship weapons)</span>
                   )}
                 </p>
+                {selectedWeaponSpec.energyWeapons > 0 && (
+                  <p>
+                    <strong>Energy Weapons:</strong> {selectedWeaponSpec.energyWeapons}
+                    {selectedWeaponSpec.energyWeapons > 1 && (
+                      <span className="info-text">
+                        {' '}
+                        ({selectedWeaponSpec.energyWeapons} lasers/beams)
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
             )}
           </>
@@ -160,11 +229,32 @@ export const WeaponsPanel: React.FC<WeaponsPanelProps> = ({ weapons, hullTonnage
         </button>
 
         {selectedCategory === 'ship' && !canAddShipWeapon && selectedWeaponSpec && (
-          <p className="warning">
-            Cannot add {selectedWeaponSpec.name} - requires {selectedWeaponSpec.slotsUsed} slot(s) but only{' '}
-            {weaponLimits.shipWeapons - shipWeaponSlotsUsed} remaining ({weaponLimits.shipWeapons}{' '}
-            maximum for {hullTonnage}-ton hull)
-          </p>
+          <>
+            {shipWeaponSlotsUsed + selectedWeaponSpec.slotsUsed > weaponLimits.shipWeapons && (
+              <p className="warning">
+                Cannot add {selectedWeaponSpec.name} - requires {selectedWeaponSpec.slotsUsed}{' '}
+                slot(s) but only {weaponLimits.shipWeapons - shipWeaponSlotsUsed} remaining (
+                {weaponLimits.shipWeapons} maximum for {hullTonnage}-ton hull)
+              </p>
+            )}
+            {selectedWeaponSpec.energyWeapons > 0 &&
+              shipWeaponSlotsUsed + selectedWeaponSpec.slotsUsed <= weaponLimits.shipWeapons && (
+                <p className="warning">
+                  Cannot add {selectedWeaponSpec.name} - insufficient energy weapon capacity.
+                  Requires {selectedWeaponSpec.energyWeapons} energy weapon
+                  {selectedWeaponSpec.energyWeapons > 1 ? 's' : ''}. Current:{' '}
+                  {currentEnergyWeaponCount} / {energyWeaponCapacity} used.
+                  {powerPlants.length === 0 && ' No power plant installed.'}
+                  {powerPlants.length > 0 && energyWeaponCapacity === 0 && (
+                    <span>
+                      {' '}
+                      Power plant{powerPlants.length > 1 ? 's' : ''} too small (requires sG or larger for energy
+                      weapons).
+                    </span>
+                  )}
+                </p>
+              )}
+          </>
         )}
         {selectedCategory === 'anti-personnel' && !canAddAntiPersonnelWeapon && (
           <p className="warning">
@@ -197,6 +287,20 @@ export const WeaponsPanel: React.FC<WeaponsPanelProps> = ({ weapons, hullTonnage
                               <span className="info-text"> (counts as {weapon.slotsUsed} ship weapons)</span>
                             )}
                           </p>
+                          {(() => {
+                            const weaponSpec = SHIP_WEAPONS[weapon.type];
+                            return weaponSpec && weaponSpec.energyWeapons > 0 ? (
+                              <p>
+                                <strong>Energy Weapons:</strong> {weaponSpec.energyWeapons}
+                                {weaponSpec.energyWeapons > 1 && (
+                                  <span className="info-text">
+                                    {' '}
+                                    ({weaponSpec.energyWeapons} lasers/beams)
+                                  </span>
+                                )}
+                              </p>
+                            ) : null;
+                          })()}
                           <p>
                             <strong>Mass:</strong> {weapon.mass} tons
                           </p>

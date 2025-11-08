@@ -404,6 +404,7 @@ export interface ShipWeaponSpec {
   mass: number; // tons
   cost: number; // credits
   slotsUsed: number; // number of ship weapon slots consumed
+  energyWeapons: number; // number of energy weapons (individual lasers or beams)
   minTonnage?: number; // minimum hull tonnage required
 }
 
@@ -413,43 +414,57 @@ export const SHIP_WEAPONS: Record<string, ShipWeaponSpec> = {
     mass: 1,
     cost: 1700000, // 1.7 MCr
     slotsUsed: 1,
+    energyWeapons: 1, // 1 laser = 1 energy weapon
   },
   pulse_laser_double: {
     name: 'Double Pulse Laser Turret',
     mass: 1,
     cost: 2500000, // 2.5 MCr
     slotsUsed: 1,
+    energyWeapons: 2, // 2 lasers = 2 energy weapons
   },
   pulse_laser_triple: {
     name: 'Triple Pulse Laser Turret',
     mass: 1,
     cost: 3500000, // 3.5 MCr
     slotsUsed: 1,
+    energyWeapons: 3, // 3 lasers = 3 energy weapons
   },
   beam_laser_single: {
     name: 'Single Beam Laser Turret',
     mass: 1,
     cost: 2200000, // 2.2 MCr
     slotsUsed: 1,
+    energyWeapons: 1, // 1 laser = 1 energy weapon
   },
   beam_laser_double: {
     name: 'Double Beam Laser Turret',
     mass: 1,
     cost: 3500000, // 3.5 MCr
     slotsUsed: 1,
+    energyWeapons: 2, // 2 lasers = 2 energy weapons
   },
   beam_laser_triple: {
     name: 'Triple Beam Laser Turret',
     mass: 1,
     cost: 5000000, // 5 MCr
     slotsUsed: 1,
+    energyWeapons: 3, // 3 lasers = 3 energy weapons
   },
   particle_beam_barbette: {
     name: 'Particle Beam Barbette',
     mass: 10,
     cost: 5500000, // 5.5 MCr
     slotsUsed: 2,
+    energyWeapons: 2, // Barbette = 2 energy weapons
     minTonnage: 40, // Requires 40+ ton hull
+  },
+  torpedo: {
+    name: 'Torpedo',
+    mass: 2.5,
+    cost: 2000000, // 2 MCr
+    slotsUsed: 1,
+    energyWeapons: 0, // No energy required
   },
 };
 
@@ -468,6 +483,7 @@ export function getAvailableShipWeapons(tonnage: number): Record<string, ShipWea
 
 // Calculate required gunners based on weapons
 // - 1 gunner per Particle Beam Barbette
+// - 1 gunner total if any Torpedoes are present
 // - 1 gunner per turret TYPE (pulse_laser, beam_laser, etc.)
 export function calculateRequiredGunners(
   weapons: Array<{ type: string; category?: string }>
@@ -481,6 +497,10 @@ export function calculateRequiredGunners(
   // Count particle beam barbettes (1 gunner each)
   const barbetteCount = shipWeapons.filter((w) => w.type === 'particle_beam_barbette').length;
   gunners += barbetteCount;
+
+  // Add 1 gunner if any torpedoes are present
+  const hasTorpedoes = shipWeapons.some((w) => w.type === 'torpedo');
+  if (hasTorpedoes) gunners += 1;
 
   // Track unique turret types
   const turretTypes = new Set<string>();
@@ -525,6 +545,69 @@ export function getWeaponLimits(tonnage: number): WeaponLimits {
   const roundedTonnage = Math.ceil(tonnage / 10) * 10;
   const clampedTonnage = Math.max(10, Math.min(100, roundedTonnage));
   return WEAPON_LIMITS[clampedTonnage];
+}
+
+// Energy weapon capacity by power plant size
+export function getEnergyWeaponCapacity(powerPlantModel: DriveModel | null): number {
+  if (!powerPlantModel) return 0;
+
+  const modelIndex = DRIVE_MODELS.indexOf(powerPlantModel);
+  if (modelIndex === -1) return 0;
+
+  // sA-sF (indices 0-5): 0 energy weapons
+  if (modelIndex <= 5) return 0;
+  // sG-sK (indices 6-10): 1 energy weapon
+  if (modelIndex <= 10) return 1;
+  // sL-sR (indices 11-17): 2 energy weapons
+  if (modelIndex <= 17) return 2;
+  // sS-sZ (indices 18-23): 3 energy weapons
+  return 3;
+}
+
+// Calculate total energy weapon capacity from all power plants
+// Multiple power plants add their capacities together
+export function calculateTotalEnergyWeaponCapacity(
+  drives: Array<{ type: string; model: string }>
+): number {
+  let totalCapacity = 0;
+
+  const powerPlants = drives.filter((d) => d.type === 'powerPlant');
+
+  powerPlants.forEach((powerPlant) => {
+    const capacity = getEnergyWeaponCapacity(powerPlant.model as DriveModel);
+    totalCapacity += capacity;
+  });
+
+  return totalCapacity;
+}
+
+// Check if a weapon is an energy weapon
+export function isEnergyWeapon(weaponType: string): boolean {
+  return (
+    weaponType.startsWith('pulse_laser_') ||
+    weaponType.startsWith('beam_laser_') ||
+    weaponType === 'particle_beam_barbette'
+  );
+}
+
+// Calculate energy weapon count (individual lasers and beams)
+// - Single turrets: 1 energy weapon
+// - Double turrets: 2 energy weapons
+// - Triple turrets: 3 energy weapons
+// - Particle beam barbettes: 2 energy weapons
+export function calculateEnergyWeaponCount(weapons: Array<{ type: string; category?: string }>): number {
+  let count = 0;
+
+  const shipWeapons = weapons.filter((w) => w.category === 'ship');
+
+  shipWeapons.forEach((weapon) => {
+    const weaponSpec = SHIP_WEAPONS[weapon.type];
+    if (weaponSpec && weaponSpec.energyWeapons > 0) {
+      count += weaponSpec.energyWeapons;
+    }
+  });
+
+  return count;
 }
 
 // Fitting types (simplified - to be expanded)

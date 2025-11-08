@@ -70,16 +70,13 @@ export const FittingsPanel: React.FC<FittingsPanelProps> = ({ fittings, hullTonn
   };
 
   const handleAddAirlock = () => {
-    const mass = calculateAirlockMass(airlockQuantity);
-    const cost = calculateAirlockCost(airlockQuantity);
-
     const newFitting: Fitting = {
       id: `fitting-${Date.now()}`,
       type: 'airlock',
       name: 'Airlock',
-      mass: mass,
-      cost: cost,
-      quantity: airlockQuantity,
+      mass: AIRLOCK_MASS, // Store per-unit mass
+      cost: AIRLOCK_COST, // Store per-unit cost
+      quantity: airlockQuantity, // Store actual quantity
     };
     onUpdate([...fittings, newFitting]);
   };
@@ -136,11 +133,7 @@ export const FittingsPanel: React.FC<FittingsPanelProps> = ({ fittings, hullTonn
             updatedFitting.cost = calculateCabinCost(updates.passengers);
           }
 
-          // If quantity changed and this is an airlock, recalculate mass/cost
-          if (updates.quantity && updatedFitting.type === 'airlock') {
-            updatedFitting.mass = calculateAirlockMass(updates.quantity);
-            updatedFitting.cost = calculateAirlockCost(updates.quantity);
-          }
+          // For airlocks, mass and cost are per-unit, so quantity change alone handles total
 
           return updatedFitting;
         }
@@ -281,16 +274,22 @@ export const FittingsPanel: React.FC<FittingsPanelProps> = ({ fittings, hullTonn
             <strong>Quantity:</strong> {airlockQuantity}
           </p>
           <p>
-            <strong>Mass:</strong> {calculateAirlockMass(airlockQuantity)} tons
+            <strong>Mass per Airlock:</strong> {AIRLOCK_MASS} ton
           </p>
           <p>
-            <strong>Cost:</strong> {(calculateAirlockCost(airlockQuantity) / 1000000).toFixed(2)}{' '}
-            MCr ({(AIRLOCK_COST / 1000000).toFixed(1)} MCr each)
+            <strong>Total Mass:</strong> {calculateAirlockMass(airlockQuantity)} tons
+          </p>
+          <p>
+            <strong>Cost per Airlock:</strong> {(AIRLOCK_COST / 1000000).toFixed(1)} MCr
+          </p>
+          <p>
+            <strong>Total Cost:</strong> {(calculateAirlockCost(airlockQuantity) / 1000000).toFixed(2)}{' '}
+            MCr
           </p>
         </div>
 
         <button onClick={handleAddAirlock} className="btn-primary">
-          Add Airlock
+          Add Airlock{airlockQuantity > 1 ? 's' : ''}
         </button>
 
         <h3>Add Other Fittings</h3>
@@ -332,7 +331,10 @@ export const FittingsPanel: React.FC<FittingsPanelProps> = ({ fittings, hullTonn
             fittings.map((fitting) => (
               <div key={fitting.id} className="fitting-item">
                 <div className="fitting-details">
-                  <h4>{fitting.name}</h4>
+                  <h4>
+                    {fitting.name}
+                    {fitting.type === 'airlock' && fitting.quantity > 1 && ` (×${fitting.quantity})`}
+                  </h4>
                   {(fitting.type === 'cockpit' || fitting.type === 'control_cabin') && (
                     <>
                       <div className="form-group">
@@ -408,11 +410,12 @@ export const FittingsPanel: React.FC<FittingsPanelProps> = ({ fittings, hullTonn
                         />
                       </div>
                       <p>
-                        <strong>Mass:</strong> {fitting.mass} tons ({AIRLOCK_MASS} ton each)
+                        <strong>Mass:</strong> {fitting.mass * fitting.quantity} tons ({AIRLOCK_MASS}{' '}
+                        ton each)
                       </p>
                       <p>
-                        <strong>Cost:</strong> {(fitting.cost / 1000000).toFixed(2)} MCr (
-                        {(AIRLOCK_COST / 1000000).toFixed(1)} MCr each)
+                        <strong>Cost:</strong> {((fitting.cost * fitting.quantity) / 1000000).toFixed(2)}{' '}
+                        MCr ({(AIRLOCK_COST / 1000000).toFixed(1)} MCr each)
                       </p>
                     </>
                   )}

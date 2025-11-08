@@ -38,6 +38,12 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, onUpdate
       breakdown.push(`${barbetteCount} Particle Beam Barbette${barbetteCount > 1 ? 's' : ''}`);
     }
 
+    // Check for torpedoes
+    const torpedoCount = shipWeapons.filter((w) => w.type === 'torpedo').length;
+    if (torpedoCount > 0) {
+      breakdown.push(`Torpedo${torpedoCount > 1 ? 's' : ''} (${torpedoCount} launcher${torpedoCount > 1 ? 's' : ''})`);
+    }
+
     // Check for pulse laser turrets
     const hasPulseLaser = shipWeapons.some((w) => w.type.startsWith('pulse_laser_'));
     if (hasPulseLaser) {

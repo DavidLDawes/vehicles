@@ -331,6 +331,7 @@ const App: React.FC = () => {
           <WeaponsPanel
             weapons={smallCraftDesign!.weapons}
             hullTonnage={smallCraftDesign!.hull.tonnage}
+            drives={smallCraftDesign!.drives}
             onUpdate={handleUpdateWeapons}
           />
         );
