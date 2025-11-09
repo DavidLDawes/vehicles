@@ -360,6 +360,7 @@ const App: React.FC = () => {
             staff={smallCraftDesign!.staff}
             weapons={smallCraftDesign!.weapons}
             drives={smallCraftDesign!.drives}
+            fittings={smallCraftDesign!.fittings}
             onUpdate={handleUpdateStaff}
           />
         );

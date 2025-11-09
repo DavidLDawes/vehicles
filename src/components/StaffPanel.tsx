@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
-import { Staff, Weapon, Drive } from '../types/ship';
+import { Staff, Weapon, Drive, Fitting } from '../types/ship';
 import { calculateRequiredGunners } from '../data/constants';
 
 interface StaffPanelProps {
   staff: Staff;
   weapons: Weapon[];
   drives: Drive[];
+  fittings: Fitting[];
   onUpdate: (staff: Staff) => void;
 }
 
-export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, drives, onUpdate }) => {
+export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, drives, fittings, onUpdate }) => {
   const handleChange = (field: keyof Staff, value: number | boolean) => {
     onUpdate({ ...staff, [field]: value });
   };
@@ -28,6 +29,19 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, drives, 
   const powerPlantCount = drives.filter((d) => d.type === 'powerPlant').length;
   const maneuverDriveCount = drives.filter((d) => d.type === 'maneuver').length;
   const showEngineerOption = powerPlantCount >= 2 || maneuverDriveCount >= 2;
+
+  // Check if ECM checkbox should be shown (Basic Military or better electronics installed)
+  const electronicsWithECM = ['basic_military', 'advanced', 'very_advanced'];
+  const hasECMCapableElectronics = fittings.some(
+    (f) => f.type === 'electronics' && f.electronicsType && electronicsWithECM.includes(f.electronicsType)
+  );
+
+  // Auto-clear ECM if electronics no longer support it
+  useEffect(() => {
+    if (staff.ecm && !hasECMCapableElectronics) {
+      onUpdate({ ...staff, ecm: false });
+    }
+  }, [hasECMCapableElectronics]);
 
   // Calculate total crew including optional positions
   const optionalCrew = (staff.engineer ? 1 : 0) + (staff.comms ? 1 : 0) + (staff.sensors ? 1 : 0) + (staff.ecm ? 1 : 0);
@@ -152,17 +166,20 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, drives, 
           </label>
         </div>
 
-        <div className="form-group checkbox-group">
-          <label>
-            <input
-              type="checkbox"
-              id="ecm"
-              checked={staff.ecm || false}
-              onChange={(e) => handleChange('ecm', e.target.checked)}
-            />
-            <span>ECM (Electronic Countermeasures) Specialist</span>
-          </label>
-        </div>
+        {hasECMCapableElectronics && (
+          <div className="form-group checkbox-group">
+            <label>
+              <input
+                type="checkbox"
+                id="ecm"
+                checked={staff.ecm || false}
+                onChange={(e) => handleChange('ecm', e.target.checked)}
+              />
+              <span>ECM (Electronic Countermeasures) Specialist</span>
+            </label>
+            <p className="info-text">Requires Basic Military or better electronics with jammers</p>
+          </div>
+        )}
 
         <div className="form-group">
           <label htmlFor="other">Other Crew:</label>
