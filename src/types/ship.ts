@@ -35,7 +35,7 @@ export interface Fuel {
 
 export interface Fitting {
   id: string;
-  type: string; // cockpit, control_cabin, airlock, cabin_space, mini_berth, full_berth, etc.
+  type: string; // cockpit, control_cabin, airlock, cabin_space, mini_berth, full_berth, electronics, etc.
   name: string;
   mass: number;
   cost: number;
@@ -43,6 +43,9 @@ export interface Fitting {
   crew?: number; // For cockpit/control cabin - number of crew positions
   passengers?: number; // For control cabin - calculated as floor(crew / 2)
   description?: string;
+  electronicsType?: string; // For electronics fittings - standard, basic_civilian, basic_military, advanced, very_advanced
+  dieModifier?: number; // For electronics fittings - DM (effectiveness)
+  includes?: string; // For electronics fittings - what sensor systems are included
 }
 
 export interface Weapon {

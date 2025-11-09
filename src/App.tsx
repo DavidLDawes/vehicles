@@ -334,6 +334,7 @@ const App: React.FC = () => {
           <FittingsPanel
             fittings={smallCraftDesign!.fittings}
             hullTonnage={smallCraftDesign!.hull.tonnage}
+            hullTechLevel={smallCraftDesign!.hull.techLevel}
             onUpdate={handleUpdateFittings}
           />
         );

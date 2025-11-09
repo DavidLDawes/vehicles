@@ -18,21 +18,26 @@ import {
   FRESHER_COST,
   GALLEY_MASS,
   GALLEY_COST,
+  ELECTRONICS_SYSTEMS,
+  getAvailableElectronics,
+  calculateElectronicsMass,
 } from '../data/constants';
 
 interface FittingsPanelProps {
   fittings: Fitting[];
   hullTonnage: number;
+  hullTechLevel: string;
   onUpdate: (fittings: Fitting[]) => void;
 }
 
-export const FittingsPanel: React.FC<FittingsPanelProps> = ({ fittings, hullTonnage, onUpdate }) => {
+export const FittingsPanel: React.FC<FittingsPanelProps> = ({ fittings, hullTonnage, hullTechLevel, onUpdate }) => {
   const [selectedCockpitType, setSelectedCockpitType] = useState<'cockpit' | 'control_cabin'>(
     'cockpit'
   );
   const [crewCount, setCrewCount] = useState<number>(1);
   const [cabinPassengers, setCabinPassengers] = useState<number>(1);
   const [airlockQuantity, setAirlockQuantity] = useState<number>(1);
+  const [selectedElectronics, setSelectedElectronics] = useState<string>('standard');
 
   const handleAddCockpit = () => {
     const mass = calculateCockpitMass(selectedCockpitType, crewCount);
@@ -105,6 +110,28 @@ export const FittingsPanel: React.FC<FittingsPanelProps> = ({ fittings, hullTonn
     onUpdate([...fittings, newFitting]);
   };
 
+  const handleAddElectronics = () => {
+    const spec = ELECTRONICS_SYSTEMS[selectedElectronics];
+    if (!spec) return;
+
+    const hasCockpit = fittings.some((f) => f.type === 'cockpit');
+    const hasControlCabin = fittings.some((f) => f.type === 'control_cabin');
+    const mass = calculateElectronicsMass(selectedElectronics, hasCockpit, hasControlCabin);
+
+    const newFitting: Fitting = {
+      id: `fitting-${Date.now()}`,
+      type: 'electronics',
+      name: spec.name + ' Electronics',
+      mass: mass,
+      cost: spec.cost,
+      quantity: 1,
+      electronicsType: selectedElectronics,
+      dieModifier: spec.dieModifier,
+      includes: spec.includes,
+    };
+    onUpdate([...fittings, newFitting]);
+  };
+
   const handleRemoveFitting = (id: string) => {
     onUpdate(fittings.filter((f) => f.id !== id));
   };
@@ -146,6 +173,12 @@ export const FittingsPanel: React.FC<FittingsPanelProps> = ({ fittings, hullTonn
   const hasCockpitOrCabin = fittings.some(
     (f) => f.type === 'cockpit' || f.type === 'control_cabin'
   );
+
+  // Check if there's already electronics installed
+  const hasElectronics = fittings.some((f) => f.type === 'electronics');
+
+  // Get available electronics for current tech level
+  const availableElectronics = getAvailableElectronics(hullTechLevel);
 
   return (
     <div className="panel fittings-panel">
@@ -323,6 +356,69 @@ export const FittingsPanel: React.FC<FittingsPanelProps> = ({ fittings, hullTonn
           </div>
         </div>
 
+        <h3>Add Electronics</h3>
+        {hasElectronics && (
+          <p className="warning">
+            Note: You already have electronics installed. Adding another will replace the existing system.
+          </p>
+        )}
+        <p className="info">
+          Electronics systems provide sensors and communications for the craft. Better systems offer improved effectiveness (higher DM).
+        </p>
+
+        <div className="form-group">
+          <label htmlFor="electronicsType">System Type:</label>
+          <select
+            id="electronicsType"
+            value={selectedElectronics}
+            onChange={(e) => setSelectedElectronics(e.target.value)}
+          >
+            {Object.entries(availableElectronics).map(([key, spec]) => (
+              <option key={key} value={key}>
+                {spec.name} (TL {spec.minTechLevel}, DM {spec.dieModifier >= 0 ? '+' : ''}{spec.dieModifier})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {selectedElectronics && ELECTRONICS_SYSTEMS[selectedElectronics] && (
+          <div className="fitting-preview">
+            <p>
+              <strong>System:</strong> {ELECTRONICS_SYSTEMS[selectedElectronics].name}
+            </p>
+            <p>
+              <strong>Tech Level:</strong> {ELECTRONICS_SYSTEMS[selectedElectronics].minTechLevel}
+            </p>
+            <p>
+              <strong>Die Modifier:</strong> {ELECTRONICS_SYSTEMS[selectedElectronics].dieModifier >= 0 ? '+' : ''}{ELECTRONICS_SYSTEMS[selectedElectronics].dieModifier}
+            </p>
+            <p>
+              <strong>Includes:</strong> {ELECTRONICS_SYSTEMS[selectedElectronics].includes}
+            </p>
+            <p>
+              <strong>Mass:</strong> {(() => {
+                const hasCockpit = fittings.some((f) => f.type === 'cockpit');
+                const hasControlCabin = fittings.some((f) => f.type === 'control_cabin');
+                const mass = calculateElectronicsMass(selectedElectronics, hasCockpit, hasControlCabin);
+                return mass === 0
+                  ? 'Included in control cabin/cockpit'
+                  : `${mass} ton${mass !== 1 ? 's' : ''}`;
+              })()}
+            </p>
+            <p>
+              <strong>Cost:</strong> {ELECTRONICS_SYSTEMS[selectedElectronics].cost === 0
+                ? 'Included in control cabin/cockpit'
+                : ELECTRONICS_SYSTEMS[selectedElectronics].cost >= 1000000
+                  ? `${(ELECTRONICS_SYSTEMS[selectedElectronics].cost / 1000000).toFixed(1)} MCr`
+                  : `Cr. ${ELECTRONICS_SYSTEMS[selectedElectronics].cost.toLocaleString()}`}
+            </p>
+          </div>
+        )}
+
+        <button onClick={handleAddElectronics} className="btn-primary">
+          Add Electronics
+        </button>
+
         <h3>Installed Fittings</h3>
         <div className="fittings-list">
           {fittings.length === 0 ? (
@@ -429,12 +525,32 @@ export const FittingsPanel: React.FC<FittingsPanelProps> = ({ fittings, hullTonn
                       </p>
                     </>
                   )}
+                  {fitting.type === 'electronics' && (
+                    <>
+                      <p>
+                        <strong>Tech Level:</strong> {fitting.electronicsType && ELECTRONICS_SYSTEMS[fitting.electronicsType]?.minTechLevel}
+                      </p>
+                      <p>
+                        <strong>Die Modifier:</strong> {fitting.dieModifier !== undefined && (fitting.dieModifier >= 0 ? '+' : '')}{fitting.dieModifier}
+                      </p>
+                      <p>
+                        <strong>Includes:</strong> {fitting.includes}
+                      </p>
+                      <p>
+                        <strong>Mass:</strong> {fitting.mass === 0 ? 'Included in control cabin/cockpit' : `${fitting.mass} ton${fitting.mass !== 1 ? 's' : ''}`}
+                      </p>
+                      <p>
+                        <strong>Cost:</strong> {fitting.cost === 0 ? 'Included in control cabin/cockpit' : fitting.cost >= 1000000 ? `${(fitting.cost / 1000000).toFixed(1)} MCr` : `Cr. ${fitting.cost.toLocaleString()}`}
+                      </p>
+                    </>
+                  )}
                   {fitting.type !== 'cockpit' &&
                     fitting.type !== 'control_cabin' &&
                     fitting.type !== 'cabin' &&
                     fitting.type !== 'airlock' &&
                     fitting.type !== 'fresher' &&
-                    fitting.type !== 'galley' && (
+                    fitting.type !== 'galley' &&
+                    fitting.type !== 'electronics' && (
                       <>
                         <p>
                           <strong>Quantity:</strong> {fitting.quantity}

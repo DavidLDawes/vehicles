@@ -814,3 +814,93 @@ export function getAvailableArmorTypes(techLevel: string): ArmorTypeDefinition[]
 
   return Object.values(ARMOR_TYPES).filter((armor) => tlNumber >= armor.minTechLevel);
 }
+
+// Electronics system specifications
+export interface ElectronicsSpec {
+  name: string;
+  minTechLevel: number; // Minimum TL required
+  dieModifier: number; // DM for effectiveness (+ is better)
+  includes: string; // What sensor systems are included
+  mass: number; // Tons (0 for Standard in control cabin, 0.2 for Standard in cockpit)
+  cost: number; // Credits
+  needsCockpitCheck?: boolean; // True for Standard electronics which have special mass handling
+}
+
+export const ELECTRONICS_SYSTEMS: Record<string, ElectronicsSpec> = {
+  standard: {
+    name: 'Standard',
+    minTechLevel: 8,
+    dieModifier: -4,
+    includes: 'Radar, Lidar',
+    mass: 0, // Special case: 0 in control cabin, 0.2 in cockpit (handled in component)
+    cost: 0, // Included in control cabin and cockpit
+    needsCockpitCheck: true,
+  },
+  basic_civilian: {
+    name: 'Basic Civilian',
+    minTechLevel: 9,
+    dieModifier: -2,
+    includes: 'Radar, Lidar',
+    mass: 1,
+    cost: 50000, // Cr. 50,000
+  },
+  basic_military: {
+    name: 'Basic Military',
+    minTechLevel: 10,
+    dieModifier: 0,
+    includes: 'Radar, Lidar, Jammers',
+    mass: 2,
+    cost: 1000000, // MCr. 1
+  },
+  advanced: {
+    name: 'Advanced',
+    minTechLevel: 11,
+    dieModifier: 1,
+    includes: 'Radar, Lidar, Densitometer, Jammers',
+    mass: 3,
+    cost: 2000000, // MCr. 2
+  },
+  very_advanced: {
+    name: 'Very Advanced',
+    minTechLevel: 12,
+    dieModifier: 2,
+    includes: 'Radar, Lidar, Densitometer, Jammers, Neural Activity Sensor',
+    mass: 5,
+    cost: 4000000, // MCr. 4
+  },
+};
+
+// Get available electronics for a given tech level
+export function getAvailableElectronics(techLevel: string): Record<string, ElectronicsSpec> {
+  const tlNumber = TECH_LEVELS[techLevel as TechLevel];
+  if (!tlNumber) return {};
+
+  const available: Record<string, ElectronicsSpec> = {};
+  for (const [key, spec] of Object.entries(ELECTRONICS_SYSTEMS)) {
+    if (tlNumber >= spec.minTechLevel) {
+      available[key] = spec;
+    }
+  }
+  return available;
+}
+
+// Calculate mass for electronics (special handling for Standard type)
+export function calculateElectronicsMass(
+  electronicsType: string,
+  hasCockpit: boolean,
+  hasControlCabin: boolean
+): number {
+  const spec = ELECTRONICS_SYSTEMS[electronicsType];
+  if (!spec) return 0;
+
+  // Special case for Standard electronics
+  if (electronicsType === 'standard' && spec.needsCockpitCheck) {
+    if (hasControlCabin) {
+      return 0; // Included in control cabin
+    } else if (hasCockpit) {
+      return 0.2; // Takes 0.2 tons in cockpit
+    }
+  }
+
+  return spec.mass;
+}
