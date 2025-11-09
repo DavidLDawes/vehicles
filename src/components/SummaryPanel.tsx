@@ -1,5 +1,6 @@
 import React from 'react';
 import { SmallCraftDesign } from '../types/ship';
+import { formatPerformanceRating } from '../data/constants';
 
 interface SummaryPanelProps {
   design: SmallCraftDesign;
@@ -48,11 +49,17 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
         <div className="summary-section">
           <h4>Drives</h4>
           <ul>
-            {design.drives.map((drive) => (
-              <li key={drive.id}>
-                {drive.type} - Model {drive.model} (Rating {drive.rating})
-              </li>
-            ))}
+            {design.drives.map((drive) => {
+              // Format rating based on drive type
+              const driveCategory = drive.type === 'maneuver' ? 'maneuver' : 'powerPlant';
+              const formattedRating = formatPerformanceRating(drive.rating, driveCategory);
+
+              return (
+                <li key={drive.id}>
+                  {drive.type} - Model {drive.model} ({formattedRating})
+                </li>
+              );
+            })}
           </ul>
         </div>
 
@@ -95,6 +102,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
           <ul>
             <li>Pilots: {design.staff.pilot}</li>
             {design.staff.gunner > 0 && <li>Gunners: {design.staff.gunner}</li>}
+            {design.staff.engineer && <li>Engineer: 1</li>}
             {design.staff.comms && <li>Communications: 1</li>}
             {design.staff.sensors && <li>Sensors: 1</li>}
             {design.staff.ecm && <li>ECM: 1</li>}
@@ -104,6 +112,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
                 Total Crew:{' '}
                 {design.staff.pilot +
                   design.staff.gunner +
+                  (design.staff.engineer ? 1 : 0) +
                   (design.staff.comms ? 1 : 0) +
                   (design.staff.sensors ? 1 : 0) +
                   (design.staff.ecm ? 1 : 0) +

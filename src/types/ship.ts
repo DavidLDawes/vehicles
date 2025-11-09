@@ -67,6 +67,7 @@ export interface Cargo {
 export interface Staff {
   pilot: number;
   gunner: number;
+  engineer: boolean; // Adds 1 crew if true (shown when 2+ power plants or 2+ maneuver drives)
   comms: boolean; // Adds 1 crew if true
   sensors: boolean; // Adds 1 crew if true
   ecm: boolean; // Adds 1 crew if true

@@ -57,6 +57,24 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
     }
   }, [hullTonnage, selectedModel, selectedDriveType, driveCategory, availableDriveModels]);
 
+  // Recalculate drive ratings when hull tonnage changes
+  useEffect(() => {
+    if (drives.length > 0) {
+      const updatedDrives = drives.map((drive) => {
+        const performance = getDrivePerformance(drive.model as DriveModel, hullTonnage);
+        if (performance !== null && performance !== drive.rating) {
+          return { ...drive, rating: performance };
+        }
+        return drive;
+      });
+
+      // Only update if ratings actually changed
+      if (updatedDrives.some((d, i) => d.rating !== drives[i].rating)) {
+        onUpdateDrives(updatedDrives);
+      }
+    }
+  }, [hullTonnage]); // Only depend on hullTonnage to avoid infinite loops
+
   // Calculate recommended fuel based on installed drives
   const calculateRecommendedFuel = () => {
     const drivesWithPerformance = drives.map((drive) => ({
@@ -80,12 +98,13 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
 
   const handleAddDrive = () => {
     const spec = getDriveSpec(selectedDriveType, selectedModel);
+    const performance = getDrivePerformance(selectedModel, hullTonnage);
     const newDrive: Drive = {
       id: `drive-${Date.now()}`,
       type: driveCategory,
       driveType: selectedDriveType,
       model: selectedModel,
-      rating: 1,
+      rating: performance || 0,
       mass: spec.tonnage,
       cost: mcrToCredits(spec.cost),
       quantity: 1,
@@ -102,13 +121,15 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
       drives.map((drive) => {
         if (drive.id === id) {
           const updatedDrive = { ...drive, ...updates };
-          // If model or driveType changed, update mass and cost
+          // If model or driveType changed, update mass, cost, and rating
           if (updates.model || updates.driveType) {
             const driveType = (updates.driveType || drive.driveType) as DriveType;
             const model = (updates.model || drive.model) as DriveModel;
             const spec = getDriveSpec(driveType, model);
+            const performance = getDrivePerformance(model, hullTonnage);
             updatedDrive.mass = spec.tonnage;
             updatedDrive.cost = mcrToCredits(spec.cost);
+            updatedDrive.rating = performance || 0;
           }
           return updatedDrive;
         }

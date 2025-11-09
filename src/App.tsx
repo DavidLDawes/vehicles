@@ -44,6 +44,7 @@ const App: React.FC = () => {
     staff: {
       pilot: 1,
       gunner: 0,
+      engineer: false,
       comms: false,
       sensors: false,
       ecm: false,
@@ -212,7 +213,12 @@ const App: React.FC = () => {
   // Design update handlers
   const handleUpdateHull = (hull: Hull) => {
     if (smallCraftDesign) {
-      setSmallCraftDesign({ ...smallCraftDesign, hull });
+      // Update both the hull and the top-level name
+      setSmallCraftDesign({
+        ...smallCraftDesign,
+        hull,
+        name: hull.name || 'Unnamed Small Craft'
+      });
     }
   };
 
@@ -277,7 +283,12 @@ const App: React.FC = () => {
 
   const handleSelectCraft = (craft: SmallCraftDesign | null) => {
     if (craft) {
-      setSmallCraftDesign(craft);
+      // Sync the top-level name with hull.name if needed
+      const syncedCraft = {
+        ...craft,
+        name: craft.hull.name || craft.name
+      };
+      setSmallCraftDesign(syncedCraft);
       setCurrentPanel('hull');
     }
   };
@@ -347,6 +358,7 @@ const App: React.FC = () => {
           <StaffPanel
             staff={smallCraftDesign!.staff}
             weapons={smallCraftDesign!.weapons}
+            drives={smallCraftDesign!.drives}
             onUpdate={handleUpdateStaff}
           />
         );
@@ -469,7 +481,11 @@ const App: React.FC = () => {
         <h1>Traveller Small Craft Designer</h1>
         {smallCraftDesign && currentPanel !== 'select' && (
           <div className="header-info">
-            <span>{smallCraftDesign.name}</span>
+            <span>
+              {smallCraftDesign.name === 'Unnamed Small Craft'
+                ? 'Unnamed Small Craft'
+                : `Small Craft Name: ${smallCraftDesign.name}`}
+            </span>
             <button onClick={handleBackToSelect} className="btn-link">
               Back to Selection
             </button>

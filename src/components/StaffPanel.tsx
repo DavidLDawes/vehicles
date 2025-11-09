@@ -1,14 +1,15 @@
 import React, { useEffect } from 'react';
-import { Staff, Weapon } from '../types/ship';
+import { Staff, Weapon, Drive } from '../types/ship';
 import { calculateRequiredGunners } from '../data/constants';
 
 interface StaffPanelProps {
   staff: Staff;
   weapons: Weapon[];
+  drives: Drive[];
   onUpdate: (staff: Staff) => void;
 }
 
-export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, onUpdate }) => {
+export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, drives, onUpdate }) => {
   const handleChange = (field: keyof Staff, value: number | boolean) => {
     onUpdate({ ...staff, [field]: value });
   };
@@ -23,8 +24,13 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, onUpdate
     }
   }, [requiredGunners]); // Only depend on requiredGunners to avoid infinite loops
 
+  // Check if engineer checkbox should be shown (2+ power plants or 2+ maneuver drives)
+  const powerPlantCount = drives.filter((d) => d.type === 'powerPlant').length;
+  const maneuverDriveCount = drives.filter((d) => d.type === 'maneuver').length;
+  const showEngineerOption = powerPlantCount >= 2 || maneuverDriveCount >= 2;
+
   // Calculate total crew including optional positions
-  const optionalCrew = (staff.comms ? 1 : 0) + (staff.sensors ? 1 : 0) + (staff.ecm ? 1 : 0);
+  const optionalCrew = (staff.engineer ? 1 : 0) + (staff.comms ? 1 : 0) + (staff.sensors ? 1 : 0) + (staff.ecm ? 1 : 0);
   const totalCrew = staff.pilot + staff.gunner + optionalCrew + staff.other;
 
   // Calculate gunner breakdown for display
@@ -108,6 +114,20 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, onUpdate
         <h3>Optional Crew Positions</h3>
         <p className="info">Select additional specialized crew positions (each adds 1 crew member).</p>
 
+        {showEngineerOption && (
+          <div className="form-group checkbox-group">
+            <label>
+              <input
+                type="checkbox"
+                id="engineer"
+                checked={staff.engineer || false}
+                onChange={(e) => handleChange('engineer', e.target.checked)}
+              />
+              <span>Engineer (useful with multiple power plants or maneuver drives)</span>
+            </label>
+          </div>
+        )}
+
         <div className="form-group checkbox-group">
           <label>
             <input
@@ -160,6 +180,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, onUpdate
           <div className="crew-breakdown">
             <p>Pilots: {staff.pilot}</p>
             {staff.gunner > 0 && <p>Gunners: {staff.gunner}</p>}
+            {staff.engineer && <p>Engineer: 1</p>}
             {staff.comms && <p>Comms: 1</p>}
             {staff.sensors && <p>Sensors: 1</p>}
             {staff.ecm && <p>ECM: 1</p>}
