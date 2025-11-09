@@ -74,11 +74,30 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
         <div className="summary-section">
           <h4>Fittings</h4>
           <ul>
-            {design.fittings.map((fitting) => (
-              <li key={fitting.id}>
-                {fitting.name} x{fitting.quantity}
-              </li>
-            ))}
+            {design.fittings.map((fitting) => {
+              // Special display logic based on fitting type
+              let displayText = fitting.name;
+
+              if (fitting.type === 'cockpit' || fitting.type === 'control_cabin') {
+                // Show crew count for cockpit/control cabin
+                displayText += ` (${fitting.crew || 1} crew)`;
+              } else if (fitting.type === 'cabin') {
+                // Show passenger count for cabins
+                displayText += ` (${fitting.passengers || 1} passenger${(fitting.passengers || 1) > 1 ? 's' : ''})`;
+              } else if (fitting.type === 'electronics') {
+                // Show DM for electronics
+                displayText += ` (DM ${fitting.dieModifier !== undefined && fitting.dieModifier >= 0 ? '+' : ''}${fitting.dieModifier})`;
+              } else if (fitting.quantity > 1) {
+                // Show quantity for other fittings only if > 1
+                displayText += ` x${fitting.quantity}`;
+              }
+
+              return (
+                <li key={fitting.id}>
+                  {displayText}
+                </li>
+              );
+            })}
           </ul>
         </div>
 
