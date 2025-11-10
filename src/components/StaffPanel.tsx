@@ -36,6 +36,13 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, drives, 
     (f) => f.type === 'electronics' && f.electronicsType && electronicsWithECM.includes(f.electronicsType)
   );
 
+  // Auto-clear engineer if no longer meets requirements
+  useEffect(() => {
+    if (staff.engineer && !showEngineerOption) {
+      onUpdate({ ...staff, engineer: false });
+    }
+  }, [showEngineerOption]);
+
   // Auto-clear ECM if electronics no longer support it
   useEffect(() => {
     if (staff.ecm && !hasECMCapableElectronics) {
