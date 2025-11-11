@@ -466,6 +466,27 @@ export const SHIP_WEAPONS: Record<string, ShipWeaponSpec> = {
     slotsUsed: 1,
     energyWeapons: 0, // No energy required
   },
+  missile_launcher_single: {
+    name: 'Single Missile Launcher Turret',
+    mass: 2,
+    cost: 1750000, // 1.75 MCr
+    slotsUsed: 1,
+    energyWeapons: 0, // No energy required
+  },
+  missile_launcher_double: {
+    name: 'Double Missile Launcher Turret',
+    mass: 3,
+    cost: 2500000, // 2.5 MCr
+    slotsUsed: 1,
+    energyWeapons: 0, // No energy required
+  },
+  missile_launcher_triple: {
+    name: 'Triple Missile Launcher Turret',
+    mass: 4,
+    cost: 3250000, // 3.25 MCr
+    slotsUsed: 1,
+    energyWeapons: 0, // No energy required
+  },
 };
 
 // Get available ship weapons for a given hull tonnage
@@ -484,6 +505,7 @@ export function getAvailableShipWeapons(tonnage: number): Record<string, ShipWea
 // Calculate required gunners based on weapons
 // - 1 gunner per Particle Beam Barbette
 // - 1 gunner total if any Torpedoes are present
+// - 1 gunner total if any Missile Launchers are present
 // - 1 gunner per turret TYPE (pulse_laser, beam_laser, etc.)
 export function calculateRequiredGunners(
   weapons: Array<{ type: string; category?: string }>
@@ -501,6 +523,10 @@ export function calculateRequiredGunners(
   // Add 1 gunner if any torpedoes are present
   const hasTorpedoes = shipWeapons.some((w) => w.type === 'torpedo');
   if (hasTorpedoes) gunners += 1;
+
+  // Add 1 gunner if any missile launchers are present
+  const hasMissileLaunchers = shipWeapons.some((w) => w.type.startsWith('missile_launcher_'));
+  if (hasMissileLaunchers) gunners += 1;
 
   // Track unique turret types
   const turretTypes = new Set<string>();
@@ -556,11 +582,11 @@ export function getEnergyWeaponCapacity(powerPlantModel: DriveModel | null): num
 
   // sA-sF (indices 0-5): 0 energy weapons
   if (modelIndex <= 5) return 0;
-  // sG-sK (indices 6-10): 1 energy weapon
-  if (modelIndex <= 10) return 1;
-  // sL-sR (indices 11-17): 2 energy weapons
-  if (modelIndex <= 17) return 2;
-  // sS-sZ (indices 18-23): 3 energy weapons
+  // sG-sK (indices 6-9): 1 energy weapon
+  if (modelIndex <= 9) return 1;
+  // sL-sR (indices 10-15): 2 energy weapons
+  if (modelIndex <= 15) return 2;
+  // sS-sZ (indices 16-23): 3 energy weapons
   return 3;
 }
 
@@ -702,10 +728,16 @@ export const GALLEY_COST = 100000; // 0.1 MCr
 // Cargo specifications
 export const SHIPS_LOCKER_COST_PER_TON = 200000; // 0.2 MCr per ton
 export const CARGO_BAY_COST_PER_TON = 0; // Free
+export const MISSILE_RELOAD_COST_PER_TON = 250000; // 0.25 MCr per ton
 
 // Calculate cost for ship's locker
 export function calculateShipsLockerCost(tons: number): number {
   return tons * SHIPS_LOCKER_COST_PER_TON;
+}
+
+// Calculate cost for missile reloads
+export function calculateMissileReloadCost(tons: number): number {
+  return tons * MISSILE_RELOAD_COST_PER_TON;
 }
 
 // Mass calculation constants

@@ -9,6 +9,8 @@ import { WeaponsPanel } from './components/WeaponsPanel';
 import { CargoPanel } from './components/CargoPanel';
 import { StaffPanel } from './components/StaffPanel';
 import { SummaryPanel } from './components/SummaryPanel';
+import { calculateShipsLockerCost, calculateMissileReloadCost } from './data/constants';
+import { saveSmallCraft } from './services/database';
 import './App.css';
 
 const App: React.FC = () => {
@@ -40,6 +42,7 @@ const App: React.FC = () => {
     cargo: {
       cargoBay: 0,
       shipsLocker: 0,
+      missileReloads: 0,
     },
     staff: {
       pilot: 1,
@@ -76,8 +79,8 @@ const App: React.FC = () => {
       0
     );
 
-    // Cargo mass (cargo bay + ship's locker)
-    totalMass += smallCraftDesign.cargo.cargoBay + smallCraftDesign.cargo.shipsLocker;
+    // Cargo mass (cargo bay + ship's locker + missile reloads)
+    totalMass += smallCraftDesign.cargo.cargoBay + smallCraftDesign.cargo.shipsLocker + (smallCraftDesign.cargo.missileReloads || 0);
 
     // Armor mass (directly from armor.mass)
     if (smallCraftDesign.armor) {
@@ -115,7 +118,9 @@ const App: React.FC = () => {
       0
     );
     const armorCost = smallCraftDesign.armor ? smallCraftDesign.armor.cost : 0;
-    const cargoCost = smallCraftDesign.cargo.shipsLocker * 200000; // Ship's locker: 0.2 MCr per ton
+    const cargoCost =
+      calculateShipsLockerCost(smallCraftDesign.cargo.shipsLocker) +
+      calculateMissileReloadCost(smallCraftDesign.cargo.missileReloads || 0);
 
     return {
       hull: hullCost,
@@ -265,11 +270,17 @@ const App: React.FC = () => {
   };
 
   // File operations
-  const handleSave = () => {
+  const handleSave = async () => {
     if (smallCraftDesign) {
-      console.log('Saving design:', smallCraftDesign);
-      // TODO: Save to IndexedDB
-      alert('Design saved! (Database integration pending)');
+      try {
+        const id = await saveSmallCraft(smallCraftDesign);
+        // Update the design with the new/updated ID
+        setSmallCraftDesign({ ...smallCraftDesign, id });
+        alert(`Small craft "${smallCraftDesign.name}" saved successfully!`);
+      } catch (error) {
+        console.error('Failed to save small craft:', error);
+        alert(`Failed to save small craft: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
   };
 
@@ -351,6 +362,7 @@ const App: React.FC = () => {
         return (
           <CargoPanel
             cargo={smallCraftDesign!.cargo}
+            weapons={smallCraftDesign!.weapons}
             onUpdate={handleUpdateCargo}
           />
         );

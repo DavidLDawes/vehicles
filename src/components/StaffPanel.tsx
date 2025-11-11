@@ -71,6 +71,12 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, drives, 
       breakdown.push(`Torpedo${torpedoCount > 1 ? 's' : ''} (${torpedoCount} launcher${torpedoCount > 1 ? 's' : ''})`);
     }
 
+    // Check for missile launchers
+    const missileLauncherCount = shipWeapons.filter((w) => w.type.startsWith('missile_launcher_')).length;
+    if (missileLauncherCount > 0) {
+      breakdown.push(`Missile Launcher Turrets (${missileLauncherCount} turret${missileLauncherCount > 1 ? 's' : ''})`);
+    }
+
     // Check for pulse laser turrets
     const hasPulseLaser = shipWeapons.some((w) => w.type.startsWith('pulse_laser_'));
     if (hasPulseLaser) {
