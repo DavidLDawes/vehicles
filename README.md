@@ -118,7 +118,7 @@ The IndexedDB database is automatically initialized on first run with sample cra
      - 1 gunner per turret type (pulse laser, beam laser)
      - 1 gunner per particle beam barbette
      - 1 gunner if any torpedoes present
-   - **Engineer**: Required if 2+ power plants or 2+ maneuver drives
+   - **Engineer**: Allow the option if 2+ power plants or 2+ maneuver drives are installed. Engineers can manage operations and minimize fuel use, allowing for backup drives and lessend power plant fuel needs when (for example) energy weapons are not being used.
    - **Communications Officer**: Optional specialist
    - **Sensors Officer**: Optional specialist
    - **ECM Officer**: Optional specialist
