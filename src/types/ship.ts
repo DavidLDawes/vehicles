@@ -65,6 +65,7 @@ export interface Cargo {
   cargoBay: number; // tons, no cost
   shipsLocker: number; // tons, 0.2 MCr per ton
   missileReloads?: number; // tons of missile reloads, no cost
+  modularCutterBay?: boolean; // 30 tons, no cost
   description?: string;
 }
 

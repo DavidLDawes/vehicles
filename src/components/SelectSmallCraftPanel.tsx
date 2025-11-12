@@ -119,47 +119,53 @@ export const SelectSmallCraftPanel: React.FC<SelectSmallCraftPanelProps> = ({
           {!loading && !error && savedCraft.length > 0 && (
             <>
               <h3>Saved Craft ({savedCraft.length})</h3>
-              {savedCraft.map((craft) => (
-                <div
-                  key={craft.id}
-                  className="craft-item"
-                  onClick={() => handleSelectCraft(craft)}
-                  style={{
-                    cursor: 'pointer',
-                    padding: '10px',
-                    margin: '10px 0',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div>
-                    <strong>{craft.name}</strong>
-                    <div style={{ fontSize: '0.9em', color: '#666' }}>
-                      {craft.hull.tonnage} tons, {calculateTotalCrew(craft)} crew, TL {craft.hull.techLevel}
-                      {craft.armor && <span>, AF-{craft.armor.rating}</span>}, {Math.ceil((calculateCraftCost(craft) / 1000000) * 10) / 10} MCr
-                      {craft.updatedAt && (
-                        <span> • Updated: {new Date(craft.updatedAt).toLocaleDateString()}</span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={(e) => handleDeleteCraft(craft, e)}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '10px',
+              }}>
+                {savedCraft.map((craft) => (
+                  <div
+                    key={craft.id}
+                    className="craft-item"
+                    onClick={() => handleSelectCraft(craft)}
                     style={{
-                      backgroundColor: '#d32f2f',
-                      color: 'white',
-                      border: 'none',
-                      padding: '5px 10px',
-                      borderRadius: '4px',
                       cursor: 'pointer',
+                      padding: '10px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
                     }}
                   >
-                    Delete
-                  </button>
-                </div>
-              ))}
+                    <div>
+                      <strong>{craft.name}</strong>
+                      <div style={{ fontSize: '0.9em', color: '#666' }}>
+                        {craft.hull.tonnage} tons, {calculateTotalCrew(craft)} crew, TL {craft.hull.techLevel}
+                        {craft.armor && <span>, AF-{craft.armor.rating}</span>}, {Math.ceil((calculateCraftCost(craft) / 1000000) * 10) / 10} MCr
+                        {craft.updatedAt && (
+                          <span> • Updated: {new Date(craft.updatedAt).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteCraft(craft, e)}
+                      style={{
+                        backgroundColor: '#d32f2f',
+                        color: 'white',
+                        border: 'none',
+                        padding: '5px 10px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        alignSelf: 'flex-start',
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+              </div>
             </>
           )}
         </div>

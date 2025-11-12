@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Cargo, Weapon } from '../types/ship';
 import { SHIPS_LOCKER_COST_PER_TON, calculateShipsLockerCost, MISSILE_RELOAD_COST_PER_TON, calculateMissileReloadCost } from '../data/constants';
 
 interface CargoPanelProps {
   cargo: Cargo;
   weapons: Weapon[];
+  hullTonnage: number;
+  currentMass: number; // Total mass currently used (excluding cargo)
   onUpdate: (cargo: Cargo) => void;
 }
 
-export const CargoPanel: React.FC<CargoPanelProps> = ({ cargo, weapons, onUpdate }) => {
-  const handleChange = (field: keyof Cargo, value: number) => {
+export const CargoPanel: React.FC<CargoPanelProps> = ({ cargo, weapons, hullTonnage, currentMass, onUpdate }) => {
+  const handleChange = (field: keyof Cargo, value: number | boolean) => {
     onUpdate({ ...cargo, [field]: value });
   };
 
@@ -19,10 +21,21 @@ export const CargoPanel: React.FC<CargoPanelProps> = ({ cargo, weapons, onUpdate
   );
 
   const missileReloads = cargo.missileReloads || 0;
-  const totalCargoMass = cargo.cargoBay + cargo.shipsLocker + missileReloads;
+  const modularCutterBayMass = cargo.modularCutterBay ? 30 : 0;
+  const totalCargoMass = cargo.cargoBay + cargo.shipsLocker + missileReloads + modularCutterBayMass;
   const shipsLockerCost = calculateShipsLockerCost(cargo.shipsLocker);
   const missileReloadCost = calculateMissileReloadCost(missileReloads);
   const totalCargoCost = shipsLockerCost + missileReloadCost;
+
+  // Calculate available tonnage (excluding current cargo being configured)
+  const availableTonnage = hullTonnage - currentMass;
+
+  // Auto-clear modular cutter bay if no longer enough space
+  useEffect(() => {
+    if (cargo.modularCutterBay && availableTonnage < 30) {
+      onUpdate({ ...cargo, modularCutterBay: false });
+    }
+  }, [availableTonnage]);
 
   return (
     <div className="panel cargo-panel">
@@ -109,6 +122,36 @@ export const CargoPanel: React.FC<CargoPanelProps> = ({ cargo, weapons, onUpdate
                 {(MISSILE_RELOAD_COST_PER_TON / 1000000).toFixed(2)} MCr per ton)
               </p>
             </div>
+          </>
+        )}
+
+        {availableTonnage >= 30 && (
+          <>
+            <h3>Modular Cutter Bay</h3>
+            <p className="info">
+              A docking bay for a modular cutter. Takes 30 tons, no cost.
+            </p>
+            <div className="form-group checkbox-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="modularCutterBay"
+                  checked={cargo.modularCutterBay || false}
+                  onChange={(e) => handleChange('modularCutterBay', e.target.checked)}
+                />
+                <span>Add Modular Cutter Bay</span>
+              </label>
+            </div>
+            {cargo.modularCutterBay && (
+              <div className="cargo-info">
+                <p>
+                  <strong>Mass:</strong> 30.0 tons
+                </p>
+                <p>
+                  <strong>Cost:</strong> 0.00 MCr (free)
+                </p>
+              </div>
+            )}
           </>
         )}
 

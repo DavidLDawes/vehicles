@@ -43,6 +43,7 @@ const App: React.FC = () => {
       cargoBay: 0,
       shipsLocker: 0,
       missileReloads: 0,
+      modularCutterBay: false,
     },
     staff: {
       pilot: 1,
@@ -79,8 +80,9 @@ const App: React.FC = () => {
       0
     );
 
-    // Cargo mass (cargo bay + ship's locker + missile reloads)
-    totalMass += smallCraftDesign.cargo.cargoBay + smallCraftDesign.cargo.shipsLocker + (smallCraftDesign.cargo.missileReloads || 0);
+    // Cargo mass (cargo bay + ship's locker + missile reloads + modular cutter bay)
+    const modularCutterBayMass = smallCraftDesign.cargo.modularCutterBay ? 30 : 0;
+    totalMass += smallCraftDesign.cargo.cargoBay + smallCraftDesign.cargo.shipsLocker + (smallCraftDesign.cargo.missileReloads || 0) + modularCutterBayMass;
 
     // Armor mass (directly from armor.mass)
     if (smallCraftDesign.armor) {
@@ -359,10 +361,19 @@ const App: React.FC = () => {
           />
         );
       case 'cargo':
+        // Calculate mass without cargo to show available tonnage
+        const massWithoutCargo = calculateMass() - (
+          smallCraftDesign!.cargo.cargoBay +
+          smallCraftDesign!.cargo.shipsLocker +
+          (smallCraftDesign!.cargo.missileReloads || 0) +
+          (smallCraftDesign!.cargo.modularCutterBay ? 30 : 0)
+        );
         return (
           <CargoPanel
             cargo={smallCraftDesign!.cargo}
             weapons={smallCraftDesign!.weapons}
+            hullTonnage={smallCraftDesign!.hull.tonnage}
+            currentMass={massWithoutCargo}
             onUpdate={handleUpdateCargo}
           />
         );
