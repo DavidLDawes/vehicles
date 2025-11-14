@@ -481,3 +481,8 @@ button:disabled {
     justify-content: space-between;
   }
 }
+
+.three-wide{
+  display:flex
+}
+

@@ -198,57 +198,58 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
       <h2>Drives & Fuel Configuration</h2>
       <div className="panel-content">
         <h3>Add Drive</h3>
-        <div className="form-group">
-          <label htmlFor="driveCategory">Drive Category:</label>
-          <select
-            id="driveCategory"
-            value={driveCategory}
-            onChange={(e) => {
-              const category = e.target.value as 'maneuver' | 'powerPlant';
-              setDriveCategory(category);
-              // Reset drive type to first available for the new category
-              const availableTypes = getAvailableDriveTypes(category);
-              setSelectedDriveType(availableTypes[0]);
-            }}
-          >
-            <option value="maneuver">Maneuver Drive</option>
-            <option value="powerPlant">Power Plant</option>
-          </select>
-        </div>
+        <div className="three-wide">
+          <div className="form-group">
+            <label htmlFor="driveCategory">Drive Category:</label>
+            <select
+              id="driveCategory"
+              value={driveCategory}
+              onChange={(e) => {
+                const category = e.target.value as 'maneuver' | 'powerPlant';
+                setDriveCategory(category);
+                // Reset drive type to first available for the new category
+                const availableTypes = getAvailableDriveTypes(category);
+                setSelectedDriveType(availableTypes[0]);
+              }}
+            >
+              <option value="maneuver">Maneuver Drive</option>
+              <option value="powerPlant">Power Plant</option>
+            </select>
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="driveType">Drive Type:</label>
-          <select
-            id="driveType"
-            value={selectedDriveType}
-            onChange={(e) => setSelectedDriveType(e.target.value as DriveType)}
-          >
-            {getAvailableDriveTypes(driveCategory).map((type) => (
-              <option key={type} value={type}>
-                {getDriveTypeName(type)}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="form-group">
+            <label htmlFor="driveType">Drive Type:</label>
+            <select
+              id="driveType"
+              value={selectedDriveType}
+              onChange={(e) => setSelectedDriveType(e.target.value as DriveType)}
+            >
+              {getAvailableDriveTypes(driveCategory).map((type) => (
+                <option key={type} value={type}>
+                  {getDriveTypeName(type)}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="driveModel">Drive Code:</label>
-          <select
-            id="driveModel"
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value as DriveModel)}
-          >
-            {availableDriveModels.map((model) => (
-              <option key={model} value={model}>
-                {model}
-              </option>
-            ))}
-          </select>
-          {availableDriveModels.length === 0 && (
-            <p className="warning">No drives available for this hull tonnage</p>
-          )}
+          <div className="form-group">
+            <label htmlFor="driveModel">Drive Code:</label>
+            <select
+              id="driveModel"
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value as DriveModel)}
+            >
+              {availableDriveModels.map((model) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
+            </select>
+            {availableDriveModels.length === 0 && (
+              <p className="warning">No drives available for this hull tonnage</p>
+            )}
+          </div>
         </div>
-
         {availableDriveModels.length > 0 && (
           <div className="drive-specs">
             <p>
