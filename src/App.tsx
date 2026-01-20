@@ -506,11 +506,23 @@ const App: React.FC = () => {
         <h1>Traveller Small Craft Designer</h1>
         {smallCraftDesign && currentPanel !== 'select' && (
           <div className="header-info">
-            <span>
-              {smallCraftDesign.name === 'Unnamed Small Craft'
-                ? 'Unnamed Small Craft'
-                : `Small Craft Name: ${smallCraftDesign.name}`}
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <span>
+                {smallCraftDesign.name === 'Unnamed Small Craft'
+                  ? 'Unnamed Small Craft'
+                  : `Small Craft Name: ${smallCraftDesign.name}`}
+                {smallCraftDesign.hull.tonnage > 0 && (
+                  <span style={{ marginLeft: '15px', color: '#888' }}>
+                    ({smallCraftDesign.hull.tonnage} tons)
+                  </span>
+                )}
+              </span>
+              {smallCraftDesign.description && (
+                <span style={{ fontSize: '0.9em', color: '#666', fontStyle: 'italic' }}>
+                  {smallCraftDesign.description}
+                </span>
+              )}
+            </div>
             <button onClick={handleBackToSelect} className="btn-link">
               Back to Selection
             </button>

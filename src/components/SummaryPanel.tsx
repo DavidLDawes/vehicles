@@ -37,7 +37,12 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     // Line 1: Name
     rows.push(`Name,${escapeCSV(design.name)}`);
 
-    // Line 2: Hull summary
+    // Line 2: Description (if exists)
+    if (design.description && design.description.trim() !== '') {
+      rows.push(`Description,${escapeCSV(design.description)}`);
+    }
+
+    // Line 3: Hull summary
     rows.push(`Hull,${design.hull.tonnage} tons,${toMCr(totalCost)} MCr`);
 
     // Blank line
@@ -54,9 +59,9 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     // Hull
     addRow('Hull', design.hull.description || `${design.hull.tonnageCode} (${design.hull.tonnage} tons)`, design.hull.tonnage, toMCr(design.hull.cost));
 
-    // Armor (if exists)
+    // Armor (if exists) - shown in Hull category
     if (design.armor) {
-      addRow('Armor', `${design.armor.type} Rating ${design.armor.rating}`, design.armor.mass, toMCr(design.armor.cost));
+      addRow('', `${design.armor.type} Rating ${design.armor.rating}`, design.armor.mass, toMCr(design.armor.cost));
     }
 
     // Drives

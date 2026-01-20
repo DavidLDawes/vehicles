@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SmallCraftDesign } from '../types/ship';
 import { loadAllSmallCraft, deleteSmallCraft } from '../services/database';
 import { calculateShipsLockerCost, calculateMissileReloadCost } from '../data/constants';
 import { initializeDatabase } from '../services/initialDataService';
+import { importFromCSV } from '../services/csvImportService';
 
 interface SelectSmallCraftPanelProps {
   onSelectCraft: (craft: SmallCraftDesign | null) => void;
@@ -16,6 +17,7 @@ export const SelectSmallCraftPanel: React.FC<SelectSmallCraftPanelProps> = ({
   const [savedCraft, setSavedCraft] = useState<SmallCraftDesign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Calculate total cost for a craft
   const calculateCraftCost = (design: SmallCraftDesign): number => {
@@ -99,14 +101,55 @@ export const SelectSmallCraftPanel: React.FC<SelectSmallCraftPanelProps> = ({
     }
   };
 
+  const handleImportCSV = () => {
+    // Trigger file input click
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Read file content
+      const content = await file.text();
+
+      // Parse CSV and create ship design
+      const design = importFromCSV(content, file.name);
+
+      // Load the imported design
+      onSelectCraft(design);
+    } catch (err) {
+      console.error('Failed to import CSV:', err);
+      alert(`Failed to import CSV: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="panel select-craft-panel">
       <h2>Select Small Craft</h2>
       <div className="panel-content">
         <p>Load an existing small craft design or create a new one.</p>
-        <button onClick={onCreateNew} className="btn-primary">
-          Create New Small Craft
-        </button>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+          <button onClick={onCreateNew} className="btn-primary">
+            Create New Small Craft
+          </button>
+          <button onClick={handleImportCSV} className="btn-secondary">
+            Import from CSV
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+          />
+        </div>
 
         <div className="craft-list">
           {loading && <p>Loading saved craft...</p>}

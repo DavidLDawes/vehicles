@@ -82,6 +82,7 @@ export interface Staff {
 export interface SmallCraftDesign {
   id?: number; // Auto-increment from IndexedDB
   name: string; // Unique ship name
+  description?: string; // Optional ship description
   hull: Hull;
   armor?: Armor;
   drives: Drive[];
