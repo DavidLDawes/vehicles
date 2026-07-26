@@ -42,7 +42,7 @@ export const CargoPanel: React.FC<CargoPanelProps> = ({ cargo, weapons, hullTonn
       <h2>Cargo Configuration</h2>
       <div className="panel-content">
         <p className="info">
-          Configure cargo bay and ship's locker space. Cargo bay is free, ship's locker costs{' '}
+          Configure cargo bay and ship&apos;s locker space. Cargo bay is free, ship&apos;s locker costs{' '}
           {(SHIPS_LOCKER_COST_PER_TON / 1000000).toFixed(1)} MCr per ton.
         </p>
 
@@ -70,12 +70,12 @@ export const CargoPanel: React.FC<CargoPanelProps> = ({ cargo, weapons, hullTonn
           </p>
         </div>
 
-        <h3>Ship's Locker</h3>
+        <h3>Ship&apos;s Locker</h3>
         <p className="info">
           Secure storage for equipment, supplies, and valuable items.
         </p>
         <div className="form-group">
-          <label htmlFor="shipsLocker">Ship's Locker (tons):</label>
+          <label htmlFor="shipsLocker">Ship&apos;s Locker (tons):</label>
           <input
             type="number"
             id="shipsLocker"

@@ -360,7 +360,7 @@ const App: React.FC = () => {
             onUpdate={handleUpdateWeapons}
           />
         );
-      case 'cargo':
+      case 'cargo': {
         // Calculate mass without cargo to show available tonnage
         const massWithoutCargo = calculateMass() - (
           smallCraftDesign!.cargo.cargoBay +
@@ -377,6 +377,7 @@ const App: React.FC = () => {
             onUpdate={handleUpdateCargo}
           />
         );
+      }
       case 'staff':
         return (
           <StaffPanel
