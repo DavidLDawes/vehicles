@@ -23,6 +23,8 @@
       "Bash(python3 -c \"import yaml,sys; yaml.safe_load\\(open\\('.github/workflows/ci.yml'\\)\\)\")",
       "Bash(python -c \"import yaml,sys; yaml.safe_load\\(open\\('.github/workflows/ci.yml'\\)\\)\")",
       "Bash(git checkout *)"
+      "Bash(gh repo *)",
+      "Bash(gh api *)"
     ]
   }
 }
