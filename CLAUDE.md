@@ -17,7 +17,7 @@ The application uses IndexedDB for local persistence and features a multi-panel 
 # Install dependencies
 npm install
 
-# Development server (runs on port 8080)
+# Development server (default port 5176, auto-increments if in use)
 npm run dev
 
 # Build for production
@@ -44,12 +44,12 @@ npm run apply-feature   # Apply feature branches to ships
 
 ## Build System & Technology Stack
 
-- **Build Tool**: Webpack 5 with webpack-dev-server
+- **Build Tool**: Vite
 - **Frontend**: React 19 with TypeScript
 - **Testing**: Jest with Testing Library
 - **Database**: IndexedDB (via fake-indexeddb for tests) - browser-based local storage
-- **Bundler Config**: `webpack.config.cjs` - entry point is `src/main.tsx`
-- **Dev Server**: Runs on port 8080 (configured in webpack.config.cjs)
+- **Bundler Config**: `vite.config.js` - entry point is `src/main.tsx`
+- **Dev Server**: Defaults to port 5176, auto-increments to the next free port if taken (configured in `vite.config.js`)
 - **Node Version**: 22.x (specified in package.json engines)
 
 ## Architecture Overview
@@ -185,5 +185,5 @@ Small craft names must be unique (enforced by DB unique index). Attempting to sa
 
 - App.js is compiled JavaScript (not TypeScript source) - prefer editing App.tsx if available, or be aware of JSX syntax when editing
 - Small craft names in DB are stored as `smallcraft.name` (nested property) for indexing
-- Port 8080 is hardcoded in webpack config
+- Dev server port defaults to 5176 (`vite.config.js`), auto-incrementing if that port is taken
 - `public/initial-smallcraft.json` is loaded once on first DB initialization - subsequent changes require DB flush
