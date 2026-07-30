@@ -18,7 +18,11 @@
       "Bash(npx eslint *)",
       "Bash(echo \"exit code: $?\")",
       "Read(//tmp/**)",
-      "Bash(kill %1)"
+      "Bash(kill %1)",
+      "Bash(echo \"LINT EXIT: $?\")",
+      "Bash(python3 -c \"import yaml,sys; yaml.safe_load\\(open\\('.github/workflows/ci.yml'\\)\\)\")",
+      "Bash(python -c \"import yaml,sys; yaml.safe_load\\(open\\('.github/workflows/ci.yml'\\)\\)\")",
+      "Bash(git checkout *)"
     ]
   }
 }
