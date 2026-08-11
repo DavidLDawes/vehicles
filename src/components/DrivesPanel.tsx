@@ -73,7 +73,8 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
         onUpdateDrives(updatedDrives);
       }
     }
-  }, [hullTonnage]); // Only depend on hullTonnage to avoid infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when hullTonnage changes, to avoid infinite loops
+  }, [hullTonnage]);
 
   // Calculate recommended fuel based on installed drives
   const calculateRecommendedFuel = () => {

@@ -23,7 +23,8 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, drives, 
     if (staff.gunner !== requiredGunners) {
       onUpdate({ ...staff, gunner: requiredGunners });
     }
-  }, [requiredGunners]); // Only depend on requiredGunners to avoid infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when requiredGunners changes, to avoid infinite loops
+  }, [requiredGunners]);
 
   // Check if engineer checkbox should be shown (2+ power plants or 2+ maneuver drives)
   const powerPlantCount = drives.filter((d) => d.type === 'powerPlant').length;
@@ -41,6 +42,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, drives, 
     if (staff.engineer && !showEngineerOption) {
       onUpdate({ ...staff, engineer: false });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when showEngineerOption changes, to avoid infinite loops
   }, [showEngineerOption]);
 
   // Auto-clear ECM if electronics no longer support it
@@ -48,6 +50,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, weapons, drives, 
     if (staff.ecm && !hasECMCapableElectronics) {
       onUpdate({ ...staff, ecm: false });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when hasECMCapableElectronics changes, to avoid infinite loops
   }, [hasECMCapableElectronics]);
 
   // Calculate total crew including optional positions
