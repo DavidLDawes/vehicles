@@ -35,6 +35,7 @@ export const CargoPanel: React.FC<CargoPanelProps> = ({ cargo, weapons, hullTonn
     if (cargo.modularCutterBay && availableTonnage < 30) {
       onUpdate({ ...cargo, modularCutterBay: false });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when tonnage changes; including cargo/onUpdate would re-fire on every unrelated cargo edit
   }, [availableTonnage]);
 
   return (
