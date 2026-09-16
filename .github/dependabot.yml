@@ -5,7 +5,7 @@
 
 version: 2
 updates:
-  # "npm" covers npm, yarn and pnpm lockfiles.
+  # "npm" is the ecosystem identifier for Node projects.
   - package-ecosystem: "npm"
     directory: "/" # Location of package manifests
     schedule:
