@@ -11,6 +11,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext ts,tsx",
+    "typecheck": "tsc --noEmit",
     "test": "jest --watch",
     "test:ui": "jest --watch --verbose",
     "test:run": "jest",
