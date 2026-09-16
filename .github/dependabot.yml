@@ -5,7 +5,8 @@
 
 version: 2
 updates:
-  - package-ecosystem: "NodeJS" # See documentation for possible values
+  # "npm" covers npm, yarn and pnpm lockfiles.
+  - package-ecosystem: "npm"
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
