@@ -27,3 +27,12 @@ updates:
       # eslint 10 support.
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
+      # @eslint/js majors track eslint majors (@eslint/js 10 peer-requires
+      # eslint 10), so hold it back along with eslint.
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint (8.70.x) only supports typescript <6.1.0, so a
+      # major bump to typescript 7 fails npm ci with an ERESOLVE peer
+      # conflict. Remove this once typescript-eslint adds typescript 7 support.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]

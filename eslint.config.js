@@ -16,7 +16,7 @@ module.exports = [
   },
   { files: ['src/**/*.{ts,tsx}'], ...react.configs.flat.recommended },
   { files: ['src/**/*.{ts,tsx}'], ...react.configs.flat['jsx-runtime'] },
-  { files: ['src/**/*.{ts,tsx}'], ...reactHooks.configs['recommended-latest'] },
+  { files: ['src/**/*.{ts,tsx}'], ...reactHooks.configs.flat.recommended },
   {
     files: ['src/**/*.test.{ts,tsx}', 'src/test/**/*.ts'],
     languageOptions: {
