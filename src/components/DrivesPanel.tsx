@@ -31,7 +31,7 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
   onUpdateFuel,
 }) => {
   const [selectedDriveType, setSelectedDriveType] = useState<DriveType>('gravitic_m');
-  const [selectedModel, setSelectedModel] = useState<DriveModel>('sA');
+  const [chosenModel, setChosenModel] = useState<DriveModel>('sA');
   const [driveCategory, setDriveCategory] = useState<'maneuver' | 'powerPlant'>('maneuver');
 
   // Operation duration for fuel calculations
@@ -48,14 +48,11 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
       ? getAvailableDriveModelsForType(hullTonnage, selectedDriveType)
       : getAvailableDriveModels(hullTonnage);
 
-  // Update selected model if it becomes unavailable
-  useEffect(() => {
-    if (!availableDriveModels.includes(selectedModel)) {
-      if (availableDriveModels.length > 0) {
-        setSelectedModel(availableDriveModels[0]);
-      }
-    }
-  }, [hullTonnage, selectedModel, selectedDriveType, driveCategory, availableDriveModels]);
+  // Fall back to the first available model if the chosen one becomes unavailable
+  const selectedModel =
+    availableDriveModels.includes(chosenModel) || availableDriveModels.length === 0
+      ? chosenModel
+      : availableDriveModels[0];
 
   // Recalculate drive ratings when hull tonnage changes
   useEffect(() => {
@@ -238,7 +235,7 @@ export const DrivesPanel: React.FC<DrivesPanelProps> = ({
             <select
               id="driveModel"
               value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value as DriveModel)}
+              onChange={(e) => setChosenModel(e.target.value as DriveModel)}
             >
               {availableDriveModels.map((model) => (
                 <option key={model} value={model}>

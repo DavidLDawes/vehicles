@@ -52,34 +52,35 @@ export const SelectSmallCraftPanel: React.FC<SelectSmallCraftPanelProps> = ({
     return design.staff.pilot + design.staff.gunner + optionalCrew + design.staff.other;
   };
 
+  const fetchCraft = async () => {
+    // Initialize database with default data if empty
+    await initializeDatabase();
+
+    const craft = await loadAllSmallCraft();
+    // Sort by most recently updated
+    craft.sort((a, b) => {
+      const aDate = a.updatedAt || a.createdAt || '';
+      const bDate = b.updatedAt || b.createdAt || '';
+      return bDate.localeCompare(aDate);
+    });
+    return craft;
+  };
+
+  // State is only set in promise callbacks so this is safe to call from an effect
+  const loadCraft = () =>
+    fetchCraft()
+      .then(setSavedCraft)
+      .catch((err) => {
+        console.error('Failed to load craft:', err);
+        setError('Failed to load saved craft');
+      })
+      .finally(() => setLoading(false));
+
   // Load saved craft on mount
   useEffect(() => {
     loadCraft();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only load once on mount
   }, []);
-
-  const loadCraft = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Initialize database with default data if empty
-      await initializeDatabase();
-
-      const craft = await loadAllSmallCraft();
-      // Sort by most recently updated
-      craft.sort((a, b) => {
-        const aDate = a.updatedAt || a.createdAt || '';
-        const bDate = b.updatedAt || b.createdAt || '';
-        return bDate.localeCompare(aDate);
-      });
-      setSavedCraft(craft);
-    } catch (err) {
-      console.error('Failed to load craft:', err);
-      setError('Failed to load saved craft');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSelectCraft = (craft: SmallCraftDesign) => {
     onSelectCraft(craft);
@@ -93,6 +94,8 @@ export const SelectSmallCraftPanel: React.FC<SelectSmallCraftPanelProps> = ({
     if (window.confirm(`Are you sure you want to delete "${craft.name}"?`)) {
       try {
         await deleteSmallCraft(craft.id);
+        setLoading(true);
+        setError(null);
         await loadCraft(); // Reload the list
       } catch (err) {
         console.error('Failed to delete craft:', err);
